@@ -1,0 +1,8 @@
+# PBIP Generator Requirements
+
+# Core dependencies
+# (To be added when generator code is ready)
+
+# For now, placeholder requirements
+# requests>=2.28.0
+# pyyaml>=6.0
