@@ -25,7 +25,9 @@ Python 3.8 or newer is enough. The generators use the standard library. `require
 - `docs/INSTALLATION.md`
 - `docs/USAGE.md`
 
-`templates/` and `examples/` are placeholders. The working sample is `python3 src/pbip_generator.py`.
+Open the checked-in project in Power BI Desktop: `examples/SalesReport/SalesReport.pbip`.
+
+`templates/` is still a placeholder. `python3 src/pbip_generator.py` writes a separate project under `output/`.
 
 ## License
 

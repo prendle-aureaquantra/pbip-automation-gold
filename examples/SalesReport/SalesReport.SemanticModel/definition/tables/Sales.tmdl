@@ -1,0 +1,43 @@
+table Sales
+	lineageTag: 4b7e2c11-9a30-4f6d-8c55-1e2a9b0d7f33
+
+	column Region
+		dataType: string
+		lineageTag: a1c2d3e4-1111-4aaa-8bbb-000000000001
+		summarizeBy: none
+		sourceColumn: Region
+		annotation SummarizationSetBy = Automatic
+
+	column Amount
+		dataType: decimal
+		lineageTag: a1c2d3e4-1111-4aaa-8bbb-000000000002
+		summarizeBy: sum
+		sourceColumn: Amount
+		formatString: $#,##0.00
+		annotation SummarizationSetBy = Automatic
+
+	measure 'Total Revenue' = SUM(Sales[Amount])
+		formatString: $#,##0.00
+		lineageTag: a1c2d3e4-1111-4aaa-8bbb-000000000003
+
+	partition Sales = m
+		mode: import
+		source =
+			let
+				Source = Table.FromRows(
+					{
+						{"North", 1200},
+						{"South", 900},
+						{"East", 1500},
+						{"West", 700}
+					},
+					{"Region", "Amount"}
+				),
+				Typed = Table.TransformColumnTypes(
+					Source,
+					{{"Region", type text}, {"Amount", type number}}
+				)
+			in
+				Typed
+
+	annotation PBI_ResultType = Table
