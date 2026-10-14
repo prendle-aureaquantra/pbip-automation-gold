@@ -1,0 +1,63 @@
+table SalesInvoice
+	lineageTag: 22bb33cc-4400-4d02-8e22-000000000001
+
+	column DocumentNo
+		dataType: string
+		lineageTag: 22bb33cc-4400-4d02-8e22-000000000002
+		summarizeBy: none
+		sourceColumn: DocumentNo
+		annotation SummarizationSetBy = Automatic
+
+	column CustomerNo
+		dataType: string
+		lineageTag: 22bb33cc-4400-4d02-8e22-000000000003
+		summarizeBy: none
+		sourceColumn: CustomerNo
+		annotation SummarizationSetBy = Automatic
+
+	column PostingDate
+		dataType: dateTime
+		lineageTag: 22bb33cc-4400-4d02-8e22-000000000004
+		summarizeBy: none
+		sourceColumn: PostingDate
+		formatString: yyyy-MM-dd
+		annotation SummarizationSetBy = Automatic
+
+	column Amount
+		dataType: decimal
+		lineageTag: 22bb33cc-4400-4d02-8e22-000000000005
+		summarizeBy: sum
+		sourceColumn: Amount
+		formatString: $#,##0.00
+		annotation SummarizationSetBy = Automatic
+
+	measure 'Invoice Total' = SUM(SalesInvoice[Amount])
+		formatString: $#,##0.00
+		lineageTag: 22bb33cc-4400-4d02-8e22-000000000006
+
+	partition SalesInvoice = m
+		mode: import
+		source =
+			let
+				Source = Table.FromRows(
+					{
+						{"SI-10021", "C001", #date(2026, 9, 30), 4280.00},
+						{"SI-10022", "C002", #date(2026, 10, 2), 1560.50},
+						{"SI-10023", "C001", #date(2026, 10, 6), 890.00},
+						{"SI-10024", "C003", #date(2026, 10, 8), 3125.75}
+					},
+					{"DocumentNo", "CustomerNo", "PostingDate", "Amount"}
+				),
+				Typed = Table.TransformColumnTypes(
+					Source,
+					{
+						{"DocumentNo", type text},
+						{"CustomerNo", type text},
+						{"PostingDate", type date},
+						{"Amount", type number}
+					}
+				)
+			in
+				Typed
+
+	annotation PBI_ResultType = Table

@@ -1,11 +1,11 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
-    "type": "Report",
-    "displayName": "SalesReport"
+    "type": "SemanticModel",
+    "displayName": "InvoiceRegister"
   },
   "config": {
     "version": "2.0",
-    "logicalId": "d4e5f607-1829-4abc-9def-0123456789ab"
+    "logicalId": "6f2a9c10-4e77-4b18-9d33-1c8a5e0b7d44"
   }
 }

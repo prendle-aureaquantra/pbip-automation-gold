@@ -1,0 +1,37 @@
+table Customer
+	lineageTag: 11aa22bb-3300-4c01-9d11-000000000001
+
+	column CustomerNo
+		dataType: string
+		lineageTag: 11aa22bb-3300-4c01-9d11-000000000002
+		summarizeBy: none
+		sourceColumn: CustomerNo
+		annotation SummarizationSetBy = Automatic
+
+	column Name
+		dataType: string
+		lineageTag: 11aa22bb-3300-4c01-9d11-000000000003
+		summarizeBy: none
+		sourceColumn: Name
+		annotation SummarizationSetBy = Automatic
+
+	partition Customer = m
+		mode: import
+		source =
+			let
+				Source = Table.FromRows(
+					{
+						{"C001", "Sample Retail Co"},
+						{"C002", "Sample Manufacturing Co"},
+						{"C003", "Sample Services Co"}
+					},
+					{"CustomerNo", "Name"}
+				),
+				Typed = Table.TransformColumnTypes(
+					Source,
+					{{"CustomerNo", type text}, {"Name", type text}}
+				)
+			in
+				Typed
+
+	annotation PBI_ResultType = Table

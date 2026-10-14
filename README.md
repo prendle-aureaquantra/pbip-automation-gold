@@ -25,7 +25,7 @@ Python 3.8 or newer is enough. The generators use the standard library. `require
 - `docs/INSTALLATION.md`
 - `docs/USAGE.md`
 
-Open the checked-in project in Power BI Desktop: `examples/SalesReport/SalesReport.pbip`.
+Open the checked-in project in Power BI Desktop: `examples/InvoiceRegister/InvoiceRegister.pbip`. It is a sample Business Central-style sales invoice register.
 
 `templates/` is still a placeholder. `python3 src/pbip_generator.py` writes a separate project under `output/`.
 

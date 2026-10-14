@@ -1,0 +1,3 @@
+relationship InvoiceCustomer
+	fromColumn: SalesInvoice.CustomerNo
+	toColumn: Customer.CustomerNo
