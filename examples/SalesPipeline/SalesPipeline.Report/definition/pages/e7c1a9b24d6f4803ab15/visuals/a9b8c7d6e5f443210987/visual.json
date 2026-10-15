@@ -1,0 +1,135 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "a9b8c7d6e5f443210987",
+  "position": {
+    "x": 40,
+    "y": 244,
+    "z": 2000,
+    "height": 340,
+    "width": 1200,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Opportunity"
+                    }
+                  },
+                  "Property": "OpportunityNo"
+                }
+              },
+              "queryRef": "Opportunity.OpportunityNo",
+              "nativeQueryRef": "Opportunity"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Account"
+                    }
+                  },
+                  "Property": "Name"
+                }
+              },
+              "queryRef": "Account.Name",
+              "nativeQueryRef": "Account"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Seller"
+                    }
+                  },
+                  "Property": "Name"
+                }
+              },
+              "queryRef": "Seller.Name",
+              "nativeQueryRef": "Seller"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Opportunity"
+                    }
+                  },
+                  "Property": "Stage"
+                }
+              },
+              "queryRef": "Opportunity.Stage",
+              "nativeQueryRef": "Stage"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Opportunity"
+                    }
+                  },
+                  "Property": "Amount"
+                }
+              },
+              "queryRef": "Opportunity.Amount",
+              "nativeQueryRef": "Amount"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Opportunity"
+                    }
+                  },
+                  "Property": "Health Score"
+                }
+              },
+              "queryRef": "Opportunity.Health Score",
+              "nativeQueryRef": "Health Score"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Opportunity"
+                    }
+                  },
+                  "Property": "Stage Age Days"
+                }
+              },
+              "queryRef": "Opportunity.Stage Age Days",
+              "nativeQueryRef": "Stage Age"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Opportunity"
+                    }
+                  },
+                  "Property": "Slippage Days"
+                }
+              },
+              "queryRef": "Opportunity.Slippage Days",
+              "nativeQueryRef": "Slippage"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

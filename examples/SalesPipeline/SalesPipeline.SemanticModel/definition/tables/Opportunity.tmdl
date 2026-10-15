@@ -1,0 +1,120 @@
+table Opportunity
+	lineageTag: a3000001-0000-4000-8000-000000000001
+
+	column OpportunityNo
+		dataType: string
+		lineageTag: a3000001-0000-4000-8000-000000000002
+		summarizeBy: none
+		sourceColumn: OpportunityNo
+
+	column AccountNo
+		dataType: string
+		lineageTag: a3000001-0000-4000-8000-000000000003
+		summarizeBy: none
+		sourceColumn: AccountNo
+
+	column SellerNo
+		dataType: string
+		lineageTag: a3000001-0000-4000-8000-000000000004
+		summarizeBy: none
+		sourceColumn: SellerNo
+
+	column Stage
+		dataType: string
+		lineageTag: a3000001-0000-4000-8000-000000000005
+		summarizeBy: none
+		sourceColumn: Stage
+
+	column Amount
+		dataType: decimal
+		formatString: $#,##0.00
+		lineageTag: a3000001-0000-4000-8000-000000000006
+		summarizeBy: sum
+		sourceColumn: Amount
+
+	column CloseDate
+		dataType: dateTime
+		formatString: yyyy-MM-dd
+		lineageTag: a3000001-0000-4000-8000-000000000007
+		summarizeBy: none
+		sourceColumn: CloseDate
+
+	column OriginalCloseDate
+		dataType: dateTime
+		formatString: yyyy-MM-dd
+		lineageTag: a3000001-0000-4000-8000-000000000008
+		summarizeBy: none
+		sourceColumn: OriginalCloseDate
+
+	column StageEnteredDate
+		dataType: dateTime
+		formatString: yyyy-MM-dd
+		lineageTag: a3000001-0000-4000-8000-000000000009
+		summarizeBy: none
+		sourceColumn: StageEnteredDate
+
+	column LastActivityDate
+		dataType: dateTime
+		formatString: yyyy-MM-dd
+		lineageTag: a3000001-0000-4000-8000-00000000000a
+		summarizeBy: none
+		sourceColumn: LastActivityDate
+
+	column ContactChanged
+		dataType: string
+		lineageTag: a3000001-0000-4000-8000-00000000000b
+		summarizeBy: none
+		sourceColumn: ContactChanged
+
+	column 'Stage Age Days' = DATEDIFF(Opportunity[StageEnteredDate], DATE(2026, 10, 15), DAY)
+		dataType: int64
+		formatString: 0
+		lineageTag: a3000001-0000-4000-8000-00000000000c
+		summarizeBy: none
+
+	column 'Slippage Days' = DATEDIFF(Opportunity[OriginalCloseDate], Opportunity[CloseDate], DAY)
+		dataType: int64
+		formatString: 0
+		lineageTag: a3000001-0000-4000-8000-00000000000d
+		summarizeBy: none
+
+	column 'Health Score' = VAR AsOf = DATE(2026, 10, 15) VAR ActivityDays = DATEDIFF(Opportunity[LastActivityDate], AsOf, DAY) VAR StageDays = DATEDIFF(Opportunity[StageEnteredDate], AsOf, DAY) VAR ActivityPts = SWITCH(TRUE(), ActivityDays <= 7, 40, ActivityDays <= 21, 20, 0) VAR StagePts = SWITCH(TRUE(), StageDays < 14, 30, StageDays <= 30, 15, 0) VAR SlipPts = IF(Opportunity[CloseDate] > Opportunity[OriginalCloseDate], 0, 20) VAR ContactPts = IF(Opportunity[ContactChanged] = "Yes", 0, 10) RETURN ActivityPts + StagePts + SlipPts + ContactPts
+		dataType: int64
+		formatString: 0
+		lineageTag: a3000001-0000-4000-8000-00000000000e
+		summarizeBy: none
+
+	partition Opportunity = m
+		mode: import
+		source =
+			let
+				Source = Table.FromRows(
+					{
+						{"OP-1001", "A01", "S01", "Propose", 24000.00, #date(2026, 10, 28), #date(2026, 10, 20), #date(2026, 9, 20), #date(2026, 10, 12), "No"},
+						{"OP-1002", "A01", "S01", "Won", 36000.00, #date(2026, 9, 15), #date(2026, 9, 15), #date(2026, 8, 1), #date(2026, 9, 14), "No"},
+						{"OP-1003", "A02", "S02", "Negotiate", 15000.00, #date(2026, 11, 15), #date(2026, 10, 1), #date(2026, 8, 1), #date(2026, 9, 2), "Yes"},
+						{"OP-1004", "A02", "S02", "Lost", 9000.00, #date(2026, 8, 30), #date(2026, 8, 30), #date(2026, 7, 15), #date(2026, 8, 20), "No"},
+						{"OP-1005", "A03", "S01", "Qualify", 8000.00, #date(2026, 11, 30), #date(2026, 11, 30), #date(2026, 10, 6), #date(2026, 10, 9), "No"},
+						{"OP-1006", "A03", "S02", "Won", 22000.00, #date(2026, 10, 2), #date(2026, 10, 2), #date(2026, 9, 1), #date(2026, 10, 1), "No"}
+					},
+					{"OpportunityNo", "AccountNo", "SellerNo", "Stage", "Amount", "CloseDate", "OriginalCloseDate", "StageEnteredDate", "LastActivityDate", "ContactChanged"}
+				),
+				Typed = Table.TransformColumnTypes(
+					Source,
+					{
+						{"OpportunityNo", type text},
+						{"AccountNo", type text},
+						{"SellerNo", type text},
+						{"Stage", type text},
+						{"Amount", type number},
+						{"CloseDate", type date},
+						{"OriginalCloseDate", type date},
+						{"StageEnteredDate", type date},
+						{"LastActivityDate", type date},
+						{"ContactChanged", type text}
+					}
+				)
+			in
+				Typed
+
+	annotation PBI_ResultType = Table

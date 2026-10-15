@@ -1,0 +1,56 @@
+table Visit
+	lineageTag: a4000001-0000-4000-8000-000000000001
+
+	column VisitNo
+		dataType: string
+		lineageTag: a4000001-0000-4000-8000-000000000002
+		summarizeBy: none
+		sourceColumn: VisitNo
+
+	column SellerNo
+		dataType: string
+		lineageTag: a4000001-0000-4000-8000-000000000003
+		summarizeBy: none
+		sourceColumn: SellerNo
+
+	column VisitDate
+		dataType: dateTime
+		formatString: yyyy-MM-dd
+		lineageTag: a4000001-0000-4000-8000-000000000004
+		summarizeBy: none
+		sourceColumn: VisitDate
+
+	column VisitType
+		dataType: string
+		lineageTag: a4000001-0000-4000-8000-000000000005
+		summarizeBy: none
+		sourceColumn: VisitType
+
+	partition Visit = m
+		mode: import
+		source =
+			let
+				Source = Table.FromRows(
+					{
+						{"V01", "S01", #date(2026, 10, 1), "Discovery"},
+						{"V02", "S01", #date(2026, 10, 10), "Demo"},
+						{"V03", "S01", #date(2026, 10, 7), "Follow-up"},
+						{"V04", "S02", #date(2026, 9, 1), "Discovery"},
+						{"V05", "S02", #date(2026, 9, 28), "Demo"},
+						{"V06", "S02", #date(2026, 8, 15), "Follow-up"}
+					},
+					{"VisitNo", "SellerNo", "VisitDate", "VisitType"}
+				),
+				Typed = Table.TransformColumnTypes(
+					Source,
+					{
+						{"VisitNo", type text},
+						{"SellerNo", type text},
+						{"VisitDate", type date},
+						{"VisitType", type text}
+					}
+				)
+			in
+				Typed
+
+	annotation PBI_ResultType = Table

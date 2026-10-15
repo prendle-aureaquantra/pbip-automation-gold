@@ -1,0 +1,121 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "b1c2d3e4f5a647890123",
+  "position": {
+    "x": 40,
+    "y": 604,
+    "z": 3000,
+    "height": 280,
+    "width": 1200,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Account"
+                    }
+                  },
+                  "Property": "Name"
+                }
+              },
+              "queryRef": "Account.Name",
+              "nativeQueryRef": "Account"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Account"
+                    }
+                  },
+                  "Property": "Won Revenue"
+                }
+              },
+              "queryRef": "Account.Won Revenue",
+              "nativeQueryRef": "Won Revenue"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Account"
+                    }
+                  },
+                  "Property": "PriorYearRevenue"
+                }
+              },
+              "queryRef": "Account.PriorYearRevenue",
+              "nativeQueryRef": "Prior Year"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Account"
+                    }
+                  },
+                  "Property": "Growth vs Prior Year"
+                }
+              },
+              "queryRef": "Account.Growth vs Prior Year",
+              "nativeQueryRef": "Growth"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Account"
+                    }
+                  },
+                  "Property": "LastActivityDate"
+                }
+              },
+              "queryRef": "Account.LastActivityDate",
+              "nativeQueryRef": "Last Activity"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Account"
+                    }
+                  },
+                  "Property": "Open Opportunities"
+                }
+              },
+              "queryRef": "Account.Open Opportunities",
+              "nativeQueryRef": "Open Opportunities"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Account"
+                    }
+                  },
+                  "Property": "At Risk"
+                }
+              },
+              "queryRef": "Account.At Risk",
+              "nativeQueryRef": "At Risk"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

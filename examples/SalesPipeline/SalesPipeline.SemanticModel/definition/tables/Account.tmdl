@@ -1,0 +1,77 @@
+table Account
+	lineageTag: a2000001-0000-4000-8000-000000000001
+
+	column AccountNo
+		dataType: string
+		lineageTag: a2000001-0000-4000-8000-000000000002
+		summarizeBy: none
+		sourceColumn: AccountNo
+
+	column Name
+		dataType: string
+		lineageTag: a2000001-0000-4000-8000-000000000003
+		summarizeBy: none
+		sourceColumn: Name
+
+	column PriorYearRevenue
+		dataType: decimal
+		formatString: $#,##0.00
+		lineageTag: a2000001-0000-4000-8000-000000000004
+		summarizeBy: sum
+		sourceColumn: PriorYearRevenue
+
+	column LastActivityDate
+		dataType: dateTime
+		formatString: yyyy-MM-dd
+		lineageTag: a2000001-0000-4000-8000-000000000005
+		summarizeBy: none
+		sourceColumn: LastActivityDate
+
+	column 'Won Revenue' = CALCULATE(SUM(Opportunity[Amount]), Opportunity[Stage] = "Won")
+		dataType: decimal
+		formatString: $#,##0.00
+		lineageTag: a2000001-0000-4000-8000-000000000006
+		summarizeBy: sum
+
+	column 'Growth vs Prior Year' = DIVIDE(CALCULATE(SUM(Opportunity[Amount]), Opportunity[Stage] = "Won") - Account[PriorYearRevenue], Account[PriorYearRevenue])
+		dataType: double
+		formatString: 0.0%
+		lineageTag: a2000001-0000-4000-8000-000000000007
+		summarizeBy: none
+
+	column 'Open Opportunities' = CALCULATE(COUNTROWS(Opportunity), NOT Opportunity[Stage] IN {"Won", "Lost"})
+		dataType: int64
+		formatString: 0
+		lineageTag: a2000001-0000-4000-8000-000000000008
+		summarizeBy: sum
+
+	column 'At Risk' = IF(CALCULATE(COUNTROWS(Opportunity), NOT Opportunity[Stage] IN {"Won", "Lost"}) > 0 && DATEDIFF(Account[LastActivityDate], DATE(2026, 10, 15), DAY) > 21, "Yes", "No")
+		dataType: string
+		lineageTag: a2000001-0000-4000-8000-000000000009
+		summarizeBy: none
+
+	partition Account = m
+		mode: import
+		source =
+			let
+				Source = Table.FromRows(
+					{
+						{"A01", "Sample Northwind", 42000.00, #date(2026, 10, 12)},
+						{"A02", "Sample Lakeside", 18000.00, #date(2026, 9, 1)},
+						{"A03", "Sample Harbor", 25000.00, #date(2026, 10, 8)}
+					},
+					{"AccountNo", "Name", "PriorYearRevenue", "LastActivityDate"}
+				),
+				Typed = Table.TransformColumnTypes(
+					Source,
+					{
+						{"AccountNo", type text},
+						{"Name", type text},
+						{"PriorYearRevenue", type number},
+						{"LastActivityDate", type date}
+					}
+				)
+			in
+				Typed
+
+	annotation PBI_ResultType = Table

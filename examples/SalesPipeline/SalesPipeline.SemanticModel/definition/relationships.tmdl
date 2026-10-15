@@ -1,0 +1,11 @@
+relationship OpportunitySeller
+	fromColumn: Opportunity.SellerNo
+	toColumn: Seller.SellerNo
+
+relationship OpportunityAccount
+	fromColumn: Opportunity.AccountNo
+	toColumn: Account.AccountNo
+
+relationship VisitSeller
+	fromColumn: Visit.SellerNo
+	toColumn: Seller.SellerNo

@@ -1,0 +1,11 @@
+model SalesPipeline
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+
+ref table Seller
+ref table Account
+ref table Opportunity
+ref table Visit
+
+ref cultureInfo en-US
