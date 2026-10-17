@@ -90,12 +90,14 @@ table Opportunity
 		lineageTag: a3000001-0000-4000-8000-00000000000f
 		summarizeBy: none
 
-	column 'Stage Order' = SWITCH(Opportunity[Stage], "Qualify", 1, "Propose", 2, "Negotiate", 3, "Won", 4, "Lost", 5, 9)
+	/// Computed in Power Query, not DAX: a DAX sort column that reads Stage is a circular dependency.
+	column 'Stage Order'
 		dataType: int64
 		isHidden
 		formatString: 0
 		lineageTag: a3000001-0000-4000-8000-000000000010
 		summarizeBy: none
+		sourceColumn: Stage Order
 
 	column 'Stage Probability' = SWITCH(Opportunity[Stage], "Qualify", 0.2, "Propose", 0.5, "Negotiate", 0.75, "Won", 1, 0)
 		dataType: double
@@ -110,7 +112,8 @@ table Opportunity
 		summarizeBy: none
 		sortByColumn: 'Health Band Order'
 
-	column 'Health Band Order' = SWITCH(Opportunity[Health Band], "Healthy", 1, "Watch", 2, "At Risk", 3, 4)
+	/// Built from the same inputs as Health Band, not from Health Band itself: a sort column that reads the column it sorts is a circular dependency.
+	column 'Health Band Order' = IF(NOT Opportunity[Is Open], 4, SWITCH(TRUE(), Opportunity[Health Score] >= 70, 1, Opportunity[Health Score] >= 40, 2, 3))
 		dataType: int64
 		isHidden
 		formatString: 0
@@ -155,8 +158,20 @@ table Opportunity
 						{"ContactChanged", type text}
 					},
 					"en-US"
+				),
+				WithStageOrder = Table.AddColumn(
+					Typed,
+					"Stage Order",
+					each
+						if [Stage] = "Qualify" then 1
+						else if [Stage] = "Propose" then 2
+						else if [Stage] = "Negotiate" then 3
+						else if [Stage] = "Won" then 4
+						else if [Stage] = "Lost" then 5
+						else 9,
+					Int64.Type
 				)
 			in
-				Typed
+				WithStageOrder
 
 	annotation PBI_ResultType = Table
