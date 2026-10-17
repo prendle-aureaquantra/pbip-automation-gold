@@ -30,7 +30,7 @@ table Visit
 		mode: import
 		source =
 			let
-				Source = Table.FromRows(
+				Sample = Table.FromRows(
 					{
 						{"V01", "S01", #date(2026, 10, 1), "Discovery"},
 						{"V02", "S01", #date(2026, 10, 10), "Demo"},
@@ -41,6 +41,14 @@ table Visit
 					},
 					{"VisitNo", "SellerNo", "VisitDate", "VisitType"}
 				),
+				Source =
+					if DataSource = "Csv" then
+						Table.PromoteHeaders(
+							Csv.Document(File.Contents(CsvFolder & "Visit.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+							[PromoteAllScalars = true]
+						)
+					else
+						Sample,
 				Typed = Table.TransformColumnTypes(
 					Source,
 					{
@@ -48,7 +56,8 @@ table Visit
 						{"SellerNo", type text},
 						{"VisitDate", type date},
 						{"VisitType", type text}
-					}
+					},
+					"en-US"
 				)
 			in
 				Typed

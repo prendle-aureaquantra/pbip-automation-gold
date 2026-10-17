@@ -24,6 +24,7 @@ table Opportunity
 		lineageTag: a3000001-0000-4000-8000-000000000005
 		summarizeBy: none
 		sourceColumn: Stage
+		sortByColumn: 'Stage Order'
 
 	column Amount
 		dataType: decimal
@@ -66,7 +67,7 @@ table Opportunity
 		summarizeBy: none
 		sourceColumn: ContactChanged
 
-	column 'Stage Age Days' = DATEDIFF(Opportunity[StageEnteredDate], DATE(2026, 10, 15), DAY)
+	column 'Stage Age Days' = DATEDIFF(Opportunity[StageEnteredDate], MAX(Settings[AsOfDate]), DAY)
 		dataType: int64
 		formatString: 0
 		lineageTag: a3000001-0000-4000-8000-00000000000c
@@ -78,17 +79,49 @@ table Opportunity
 		lineageTag: a3000001-0000-4000-8000-00000000000d
 		summarizeBy: none
 
-	column 'Health Score' = VAR AsOf = DATE(2026, 10, 15) VAR ActivityDays = DATEDIFF(Opportunity[LastActivityDate], AsOf, DAY) VAR StageDays = DATEDIFF(Opportunity[StageEnteredDate], AsOf, DAY) VAR ActivityPts = SWITCH(TRUE(), ActivityDays <= 7, 40, ActivityDays <= 21, 20, 0) VAR StagePts = SWITCH(TRUE(), StageDays < 14, 30, StageDays <= 30, 15, 0) VAR SlipPts = IF(Opportunity[CloseDate] > Opportunity[OriginalCloseDate], 0, 20) VAR ContactPts = IF(Opportunity[ContactChanged] = "Yes", 0, 10) RETURN ActivityPts + StagePts + SlipPts + ContactPts
+	column 'Health Score' = VAR AsOf = MAX(Settings[AsOfDate]) VAR ActivityDays = DATEDIFF(Opportunity[LastActivityDate], AsOf, DAY) VAR StageDays = DATEDIFF(Opportunity[StageEnteredDate], AsOf, DAY) VAR ActivityPts = SWITCH(TRUE(), ActivityDays <= 7, 40, ActivityDays <= 21, 20, 0) VAR StagePts = SWITCH(TRUE(), StageDays < 14, 30, StageDays <= 30, 15, 0) VAR SlipPts = IF(Opportunity[CloseDate] > Opportunity[OriginalCloseDate], 0, 20) VAR ContactPts = IF(Opportunity[ContactChanged] = "Yes", 0, 10) RETURN ActivityPts + StagePts + SlipPts + ContactPts
 		dataType: int64
 		formatString: 0
 		lineageTag: a3000001-0000-4000-8000-00000000000e
+		summarizeBy: none
+
+	column 'Is Open' = NOT Opportunity[Stage] IN {"Won", "Lost"}
+		dataType: boolean
+		lineageTag: a3000001-0000-4000-8000-00000000000f
+		summarizeBy: none
+
+	column 'Stage Order' = SWITCH(Opportunity[Stage], "Qualify", 1, "Propose", 2, "Negotiate", 3, "Won", 4, "Lost", 5, 9)
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a3000001-0000-4000-8000-000000000010
+		summarizeBy: none
+
+	column 'Stage Probability' = SWITCH(Opportunity[Stage], "Qualify", 0.2, "Propose", 0.5, "Negotiate", 0.75, "Won", 1, 0)
+		dataType: double
+		formatString: 0%
+		lineageTag: a3000001-0000-4000-8000-000000000011
+		summarizeBy: none
+
+	/// Healthy is 70 or more, Watch is 40 to 69, At Risk is under 40. Won and lost deals are Closed.
+	column 'Health Band' = IF(NOT Opportunity[Is Open], "Closed", SWITCH(TRUE(), Opportunity[Health Score] >= 70, "Healthy", Opportunity[Health Score] >= 40, "Watch", "At Risk"))
+		dataType: string
+		lineageTag: a3000001-0000-4000-8000-000000000012
+		summarizeBy: none
+		sortByColumn: 'Health Band Order'
+
+	column 'Health Band Order' = SWITCH(Opportunity[Health Band], "Healthy", 1, "Watch", 2, "At Risk", 3, 4)
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a3000001-0000-4000-8000-000000000013
 		summarizeBy: none
 
 	partition Opportunity = m
 		mode: import
 		source =
 			let
-				Source = Table.FromRows(
+				Sample = Table.FromRows(
 					{
 						{"OP-1001", "A01", "S01", "Propose", 24000.00, #date(2026, 10, 28), #date(2026, 10, 20), #date(2026, 9, 20), #date(2026, 10, 12), "No"},
 						{"OP-1002", "A01", "S01", "Won", 36000.00, #date(2026, 9, 15), #date(2026, 9, 15), #date(2026, 8, 1), #date(2026, 9, 14), "No"},
@@ -99,6 +132,14 @@ table Opportunity
 					},
 					{"OpportunityNo", "AccountNo", "SellerNo", "Stage", "Amount", "CloseDate", "OriginalCloseDate", "StageEnteredDate", "LastActivityDate", "ContactChanged"}
 				),
+				Source =
+					if DataSource = "Csv" then
+						Table.PromoteHeaders(
+							Csv.Document(File.Contents(CsvFolder & "Opportunity.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+							[PromoteAllScalars = true]
+						)
+					else
+						Sample,
 				Typed = Table.TransformColumnTypes(
 					Source,
 					{
@@ -112,7 +153,8 @@ table Opportunity
 						{"StageEnteredDate", type date},
 						{"LastActivityDate", type date},
 						{"ContactChanged", type text}
-					}
+					},
+					"en-US"
 				)
 			in
 				Typed

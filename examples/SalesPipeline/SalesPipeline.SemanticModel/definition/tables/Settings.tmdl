@@ -1,0 +1,17 @@
+table Settings
+	isHidden
+	lineageTag: a5000001-0000-4000-8000-000000000001
+
+	column AsOfDate
+		dataType: dateTime
+		isHidden
+		formatString: yyyy-MM-dd
+		lineageTag: a5000001-0000-4000-8000-000000000002
+		summarizeBy: none
+		sourceColumn: AsOfDate
+
+	partition Settings = m
+		mode: import
+		source = #table(type table [AsOfDate = date], {{AsOfDate}})
+
+	annotation PBI_ResultType = Table

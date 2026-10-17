@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "a9b8c7d6e5f443210987",
   "position": {
-    "x": 40,
-    "y": 244,
-    "z": 2000,
+    "x": 436,
+    "y": 152,
+    "z": 8000,
     "height": 340,
-    "width": 1200,
-    "tabOrder": 2000
+    "width": 820,
+    "tabOrder": 8000
   },
   "visual": {
     "visualType": "tableEx",
@@ -107,6 +107,20 @@
                       "Entity": "Opportunity"
                     }
                   },
+                  "Property": "Health Band"
+                }
+              },
+              "queryRef": "Opportunity.Health Band",
+              "nativeQueryRef": "Health Band"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Opportunity"
+                    }
+                  },
                   "Property": "Stage Age Days"
                 }
               },
@@ -130,6 +144,28 @@
           ]
         }
       }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Opportunity Health'"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

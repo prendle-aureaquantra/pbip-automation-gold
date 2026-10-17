@@ -20,54 +20,33 @@ table Seller
 		summarizeBy: sum
 		sourceColumn: RevenueTarget
 
-	column 'Won Revenue' = CALCULATE(SUM(Opportunity[Amount]), Opportunity[Stage] = "Won")
-		dataType: decimal
-		formatString: $#,##0.00
-		lineageTag: a1000001-0000-4000-8000-000000000005
-		summarizeBy: sum
-
-	column 'Revenue vs Target' = CALCULATE(SUM(Opportunity[Amount]), Opportunity[Stage] = "Won") - Seller[RevenueTarget]
-		dataType: decimal
-		formatString: $#,##0.00
-		lineageTag: a1000001-0000-4000-8000-000000000006
-		summarizeBy: sum
-
-	column 'Open Pipeline' = CALCULATE(SUM(Opportunity[Amount]), NOT Opportunity[Stage] IN {"Won", "Lost"})
-		dataType: decimal
-		formatString: $#,##0.00
-		lineageTag: a1000001-0000-4000-8000-000000000007
-		summarizeBy: sum
-
-	column 'Visit Count' = CALCULATE(COUNTROWS(Visit))
-		dataType: int64
-		formatString: 0
-		lineageTag: a1000001-0000-4000-8000-000000000008
-		summarizeBy: sum
-
-	column 'Win Rate' = DIVIDE(CALCULATE(COUNTROWS(Opportunity), Opportunity[Stage] = "Won"), CALCULATE(COUNTROWS(Opportunity), Opportunity[Stage] IN {"Won", "Lost"}))
-		dataType: double
-		formatString: 0.0%
-		lineageTag: a1000001-0000-4000-8000-000000000009
-		summarizeBy: none
-
 	partition Seller = m
 		mode: import
 		source =
 			let
-				Source = Table.FromRows(
+				Sample = Table.FromRows(
 					{
 						{"S01", "Jordan Hale", 80000.00},
 						{"S02", "Priya Shah", 60000.00}
 					},
 					{"SellerNo", "Name", "RevenueTarget"}
 				),
+				Source =
+					if DataSource = "Csv" then
+						Table.PromoteHeaders(
+							Csv.Document(File.Contents(CsvFolder & "Seller.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+							[PromoteAllScalars = true]
+						)
+					else
+						Sample,
 				Typed = Table.TransformColumnTypes(
 					Source,
 					{
 						{"SellerNo", type text},
 						{"Name", type text},
 						{"RevenueTarget", type number}
-					}
+					},
+					"en-US"
 				)
 			in
 				Typed

@@ -27,34 +27,11 @@ table Account
 		summarizeBy: none
 		sourceColumn: LastActivityDate
 
-	column 'Won Revenue' = CALCULATE(SUM(Opportunity[Amount]), Opportunity[Stage] = "Won")
-		dataType: decimal
-		formatString: $#,##0.00
-		lineageTag: a2000001-0000-4000-8000-000000000006
-		summarizeBy: sum
-
-	column 'Growth vs Prior Year' = DIVIDE(CALCULATE(SUM(Opportunity[Amount]), Opportunity[Stage] = "Won") - Account[PriorYearRevenue], Account[PriorYearRevenue])
-		dataType: double
-		formatString: 0.0%
-		lineageTag: a2000001-0000-4000-8000-000000000007
-		summarizeBy: none
-
-	column 'Open Opportunities' = CALCULATE(COUNTROWS(Opportunity), NOT Opportunity[Stage] IN {"Won", "Lost"})
-		dataType: int64
-		formatString: 0
-		lineageTag: a2000001-0000-4000-8000-000000000008
-		summarizeBy: sum
-
-	column 'At Risk' = IF(CALCULATE(COUNTROWS(Opportunity), NOT Opportunity[Stage] IN {"Won", "Lost"}) > 0 && DATEDIFF(Account[LastActivityDate], DATE(2026, 10, 15), DAY) > 21, "Yes", "No")
-		dataType: string
-		lineageTag: a2000001-0000-4000-8000-000000000009
-		summarizeBy: none
-
 	partition Account = m
 		mode: import
 		source =
 			let
-				Source = Table.FromRows(
+				Sample = Table.FromRows(
 					{
 						{"A01", "Sample Northwind", 42000.00, #date(2026, 10, 12)},
 						{"A02", "Sample Lakeside", 18000.00, #date(2026, 9, 1)},
@@ -62,6 +39,14 @@ table Account
 					},
 					{"AccountNo", "Name", "PriorYearRevenue", "LastActivityDate"}
 				),
+				Source =
+					if DataSource = "Csv" then
+						Table.PromoteHeaders(
+							Csv.Document(File.Contents(CsvFolder & "Account.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+							[PromoteAllScalars = true]
+						)
+					else
+						Sample,
 				Typed = Table.TransformColumnTypes(
 					Source,
 					{
@@ -69,7 +54,8 @@ table Account
 						{"Name", type text},
 						{"PriorYearRevenue", type number},
 						{"LastActivityDate", type date}
-					}
+					},
+					"en-US"
 				)
 			in
 				Typed

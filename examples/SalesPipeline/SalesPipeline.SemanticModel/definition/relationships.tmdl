@@ -9,3 +9,7 @@ relationship OpportunityAccount
 relationship VisitSeller
 	fromColumn: Visit.SellerNo
 	toColumn: Seller.SellerNo
+
+relationship OpportunityCloseDate
+	fromColumn: Opportunity.CloseDate
+	toColumn: Calendar.Date

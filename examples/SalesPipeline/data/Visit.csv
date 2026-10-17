@@ -1,0 +1,7 @@
+VisitNo,SellerNo,VisitDate,VisitType
+V01,S01,2026-10-01,Discovery
+V02,S01,2026-10-10,Demo
+V03,S01,2026-10-07,Follow-up
+V04,S02,2026-09-01,Discovery
+V05,S02,2026-09-28,Demo
+V06,S02,2026-08-15,Follow-up

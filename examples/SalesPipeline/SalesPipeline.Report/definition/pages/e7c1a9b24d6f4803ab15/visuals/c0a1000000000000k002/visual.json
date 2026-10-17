@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "c0a1000000000000k002",
+  "position": {
+    "x": 575,
+    "y": 16,
+    "z": 4000,
+    "height": 120,
+    "width": 163,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Target Attainment"
+                }
+              },
+              "queryRef": "Metrics.Target Attainment",
+              "nativeQueryRef": "Target Attainment"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

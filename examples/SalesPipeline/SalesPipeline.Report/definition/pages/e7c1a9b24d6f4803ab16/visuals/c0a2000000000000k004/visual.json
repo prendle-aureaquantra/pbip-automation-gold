@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "c0a2000000000000k004",
+  "position": {
+    "x": 842,
+    "y": 16,
+    "z": 5000,
+    "height": 120,
+    "width": 202,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Slipped Deals"
+                }
+              },
+              "queryRef": "Metrics.Slipped Deals",
+              "nativeQueryRef": "Slipped Deals"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
