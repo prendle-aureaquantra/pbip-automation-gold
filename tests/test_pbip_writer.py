@@ -161,4 +161,7 @@ def test_sales_pipeline_build_matches_checked_in(tmp_path):
     build_sales_pipeline.build(tmp_path, csv_folder=csv_folder)
     for f in sorted(p for p in tmp_path.rglob("*") if p.is_file()):
         rel = f.relative_to(tmp_path)
-        assert (checked_in / rel).read_bytes() == f.read_bytes(), f"{rel} differs; rerun examples/build_sales_pipeline.py"
+        # Line endings depend on the platform and git's autocrlf setting, so compare without them
+        expected = (checked_in / rel).read_bytes().replace(b"\r\n", b"\n")
+        actual = f.read_bytes().replace(b"\r\n", b"\n")
+        assert expected == actual, f"{rel} differs; rerun examples/build_sales_pipeline.py"
