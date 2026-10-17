@@ -8,6 +8,10 @@ measure, relationships or sort columns that do not resolve, and duplicate names.
 
 Usage:
     python3 src/validate_pbip.py examples/SalesPipeline/SalesPipeline.pbip [more.pbip ...]
+    python3 src/validate_pbip.py --schemas examples/SalesPipeline/SalesPipeline.pbip
+
+--schemas also validates every report JSON file against the Microsoft schema named
+in its "$schema". It downloads those schemas and needs `pip install jsonschema`.
 
 Exit code is 1 when any error is found.
 """
@@ -285,9 +289,44 @@ def check_report(report_dir, model, errors, warnings):
                     warnings.append(f"{label}: shows hidden column {ent}[{prop}]")
 
 
+def check_schemas(root, errors):
+    """Validate each JSON file against the published schema its "$schema" names."""
+    try:
+        import urllib.request
+        from jsonschema import Draft7Validator
+        from referencing import Registry, Resource
+        from referencing.jsonschema import DRAFT7
+    except ImportError:
+        errors.append("--schemas needs the jsonschema package (pip install jsonschema)")
+        return
+    cache = {}
+
+    def fetch(uri):
+        uri = uri.split("#")[0]
+        if uri not in cache:
+            with urllib.request.urlopen(uri, timeout=30) as r:
+                cache[uri] = json.loads(r.read().decode("utf-8-sig"))
+        return cache[uri]
+
+    registry = Registry(retrieve=lambda uri: Resource.from_contents(fetch(uri), default_specification=DRAFT7))
+    for f in sorted(root.rglob("*.json")):
+        doc = json.loads(f.read_text(encoding="utf-8"))
+        url = doc.get("$schema") if isinstance(doc, dict) else None
+        if not url:
+            continue
+        try:
+            validator = Draft7Validator(fetch(url), registry=registry)
+        except OSError as e:
+            errors.append(f"{f.relative_to(root)}: could not download {url} ({e})")
+            continue
+        for e in validator.iter_errors(doc):
+            where = "/".join(map(str, e.path))
+            errors.append(f"{f.relative_to(root)}: schema: /{where}: {e.message[:200]}")
+
+
 # --- entry -----------------------------------------------------------------
 
-def validate(pbip_path):
+def validate(pbip_path, schemas=False):
     pbip_path = Path(pbip_path)
     errors, warnings = [], []
     root = pbip_path.parent
@@ -309,6 +348,8 @@ def validate(pbip_path):
         errors.append(f"{model_dir.name}: no TMDL definition folder")
         return errors, warnings
 
+    if schemas:
+        check_schemas(root, errors)
     model = parse_tmdl(definition, errors)
     check_model(model, errors)
     if (report_dir / "definition" / "pages" / "pages.json").exists():
@@ -319,12 +360,14 @@ def validate(pbip_path):
 
 
 def main(argv):
-    if not argv:
+    schemas = "--schemas" in argv
+    paths = [a for a in argv if a != "--schemas"]
+    if not paths:
         print(__doc__)
         return 2
     failed = False
-    for path in argv:
-        errors, warnings = validate(path)
+    for path in paths:
+        errors, warnings = validate(path, schemas=schemas)
         status = "FAIL" if errors else "ok"
         print(f"{status}  {path}  ({len(errors)} errors, {len(warnings)} warnings)")
         for e in errors:

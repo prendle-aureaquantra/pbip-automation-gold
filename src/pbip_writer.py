@@ -319,8 +319,9 @@ def write_project(name, tables, relationships=(), pages=None, output_dir="output
         "version": "4.0", "datasetReference": {"byPath": {"path": f"../{name}.SemanticModel"}},
     })
     rd = report_dir / "definition"
+    # themeCollection is required by the schema; empty means Desktop's default theme.
     _dump(rd / "report.json", {"$schema": SCHEMA + "item/report/definition/report/1.3.0/schema.json",
-                               "layoutOptimization": "None"})
+                               "layoutOptimization": "None", "themeCollection": {}})
     _dump(rd / "version.json", {"$schema": SCHEMA + "item/report/definition/versionMetadata/1.0.0/schema.json",
                                 "version": "2.0.0"})
     _dump(rd / "bookmarks" / "bookmarks.json", {

@@ -26,7 +26,7 @@ Check a project before opening it:
 python3 src/validate_pbip.py output/SalesReport.pbip examples/SalesPipeline/SalesPipeline.pbip
 ```
 
-The validator checks that every field a visual uses, every column and measure named in DAX, every relationship and every sort-by column exist in the model. It also flags visuals that overlap or run off the page. Power BI Desktop is still the final check.
+The validator checks that every field a visual uses, every column and measure named in DAX, every relationship and every sort-by column exist in the model. It also flags visuals that overlap or run off the page.Add `--schemas` to also check every report JSON file against Microsoft's published schema (needs `pip install jsonschema`, and downloads the schemas). Power BI Desktop is still the final check.
 
 Python 3.8 or newer is enough. The generators use the standard library. `requirements.txt` lists optional packages this code does not import yet.
 
