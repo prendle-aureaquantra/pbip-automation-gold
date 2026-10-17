@@ -31,6 +31,8 @@ Visual fields: "measure", "category", "categories", "values", "x_axis", "y_axis"
 "size", or a generic "fields": {"Role": ["Field", ...]}. A field name resolves to a
 measure first, then to a column of the visual's "table", then of any table.
 "Table.Column" picks a table explicitly. An unknown field raises ValueError.
+A ("Field", "Label") pair sets the header shown in the visual, e.g.
+("Account.Name", "Account") when two tables both have a Name column.
 """
 import datetime as _dt
 import json
@@ -236,12 +238,16 @@ def visual_json(v, name, z, resolve, default_table):
     for role, fields in _roles(v, vtype).items():
         projections = []
         for f in fields:
+            f, label = f if isinstance(f, (tuple, list)) else (f, None)
             kind, ent, prop = resolve(f, v.get("table", default_table))
-            projections.append({
+            projection = {
                 "field": {kind: {"Expression": {"SourceRef": {"Entity": ent}}, "Property": prop}},
                 "queryRef": f"{ent}.{prop}",
                 "nativeQueryRef": prop,
-            })
+            }
+            if label:
+                projection["displayName"] = label
+            projections.append(projection)
         state[role] = {"projections": projections}
     visual = {"visualType": vtype, "query": {"queryState": state}}
     if v.get("title") and vtype != "card":

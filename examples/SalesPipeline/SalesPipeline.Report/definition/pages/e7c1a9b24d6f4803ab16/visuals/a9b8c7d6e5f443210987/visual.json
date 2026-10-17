@@ -41,7 +41,8 @@
                 }
               },
               "queryRef": "Account.Name",
-              "nativeQueryRef": "Account"
+              "nativeQueryRef": "Account",
+              "displayName": "Account"
             },
             {
               "field": {
@@ -55,7 +56,8 @@
                 }
               },
               "queryRef": "Seller.Name",
-              "nativeQueryRef": "Seller"
+              "nativeQueryRef": "Seller",
+              "displayName": "Seller"
             },
             {
               "field": {
