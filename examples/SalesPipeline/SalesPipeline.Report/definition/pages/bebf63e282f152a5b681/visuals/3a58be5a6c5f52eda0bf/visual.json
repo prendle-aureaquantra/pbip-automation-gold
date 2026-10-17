@@ -1,0 +1,200 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "3a58be5a6c5f52eda0bf",
+  "position": {
+    "x": 24,
+    "y": 616,
+    "z": 12000,
+    "height": 204,
+    "width": 1232,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Seller"
+                    }
+                  },
+                  "Property": "Name"
+                }
+              },
+              "queryRef": "Seller.Name",
+              "nativeQueryRef": "Seller",
+              "displayName": "Seller"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Won Revenue"
+                }
+              },
+              "queryRef": "Metrics.Won Revenue",
+              "nativeQueryRef": "Won Revenue"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Revenue Target"
+                }
+              },
+              "queryRef": "Metrics.Revenue Target",
+              "nativeQueryRef": "Revenue Target"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Revenue vs Target"
+                }
+              },
+              "queryRef": "Metrics.Revenue vs Target",
+              "nativeQueryRef": "Revenue vs Target"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Target Attainment"
+                }
+              },
+              "queryRef": "Metrics.Target Attainment",
+              "nativeQueryRef": "Target Attainment"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Pipeline Value"
+                }
+              },
+              "queryRef": "Metrics.Pipeline Value",
+              "nativeQueryRef": "Pipeline Value"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Weighted Pipeline"
+                }
+              },
+              "queryRef": "Metrics.Weighted Pipeline",
+              "nativeQueryRef": "Weighted Pipeline"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Pipeline Coverage"
+                }
+              },
+              "queryRef": "Metrics.Pipeline Coverage",
+              "nativeQueryRef": "Pipeline Coverage"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Win Rate"
+                }
+              },
+              "queryRef": "Metrics.Win Rate",
+              "nativeQueryRef": "Win Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Visit Count"
+                }
+              },
+              "queryRef": "Metrics.Visit Count",
+              "nativeQueryRef": "Visit Count"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Days Since Last Visit"
+                }
+              },
+              "queryRef": "Metrics.Days Since Last Visit",
+              "nativeQueryRef": "Days Since Last Visit"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Seller Performance'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

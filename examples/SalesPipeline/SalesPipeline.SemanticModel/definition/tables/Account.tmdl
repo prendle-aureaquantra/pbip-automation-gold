@@ -1,29 +1,29 @@
 table Account
-	lineageTag: a2000001-0000-4000-8000-000000000001
+	lineageTag: 5a8db672-7455-5739-bfb8-4557b747198f
 
 	column AccountNo
 		dataType: string
-		lineageTag: a2000001-0000-4000-8000-000000000002
+		lineageTag: 2d5a6d34-681a-5ee4-996e-887b82cb1f21
 		summarizeBy: none
 		sourceColumn: AccountNo
 
 	column Name
 		dataType: string
-		lineageTag: a2000001-0000-4000-8000-000000000003
+		lineageTag: d1626183-db1a-53d7-9faa-f3ce2cacd48d
 		summarizeBy: none
 		sourceColumn: Name
 
 	column PriorYearRevenue
 		dataType: decimal
-		formatString: $#,##0.00
-		lineageTag: a2000001-0000-4000-8000-000000000004
+		formatString: $#,##0
+		lineageTag: a41e92fa-f483-579e-9f0b-21355e8eae1b
 		summarizeBy: sum
 		sourceColumn: PriorYearRevenue
 
 	column LastActivityDate
 		dataType: dateTime
 		formatString: yyyy-MM-dd
-		lineageTag: a2000001-0000-4000-8000-000000000005
+		lineageTag: f64cb063-6352-5781-8ea0-823b4b5e84f7
 		summarizeBy: none
 		sourceColumn: LastActivityDate
 
@@ -33,18 +33,14 @@ table Account
 			let
 				Sample = Table.FromRows(
 					{
-						{"A01", "Sample Northwind", 42000.00, #date(2026, 10, 12)},
-						{"A02", "Sample Lakeside", 18000.00, #date(2026, 9, 1)},
-						{"A03", "Sample Harbor", 25000.00, #date(2026, 10, 8)}
+						{"A01", "Sample Northwind", 42000.0, #date(2026, 10, 12)},
+						{"A02", "Sample Lakeside", 18000.0, #date(2026, 9, 1)},
+						{"A03", "Sample Harbor", 25000.0, #date(2026, 10, 8)}
 					},
 					{"AccountNo", "Name", "PriorYearRevenue", "LastActivityDate"}
 				),
-				Source =
-					if DataSource = "Csv" then
-						Table.PromoteHeaders(
-							Csv.Document(File.Contents(CsvFolder & "Account.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
-							[PromoteAllScalars = true]
-						)
+				Source = if DataSource = "Csv" then
+						Table.PromoteHeaders(Csv.Document(File.Contents(CsvFolder & "Account.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
 					else
 						Sample,
 				Typed = Table.TransformColumnTypes(

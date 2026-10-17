@@ -1,12 +1,12 @@
 table Settings
 	isHidden
-	lineageTag: a5000001-0000-4000-8000-000000000001
+	lineageTag: 523947e0-e4d5-591c-af38-b0aade5d17e1
 
 	column AsOfDate
 		dataType: dateTime
 		isHidden
 		formatString: yyyy-MM-dd
-		lineageTag: a5000001-0000-4000-8000-000000000002
+		lineageTag: 8b5a1662-cc59-567e-b295-dbe98d4f7659
 		summarizeBy: none
 		sourceColumn: AsOfDate
 

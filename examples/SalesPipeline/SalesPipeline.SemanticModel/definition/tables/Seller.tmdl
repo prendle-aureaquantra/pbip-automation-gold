@@ -1,22 +1,22 @@
 table Seller
-	lineageTag: a1000001-0000-4000-8000-000000000001
+	lineageTag: 7279edae-701e-5897-9632-531196f9fe1b
 
 	column SellerNo
 		dataType: string
-		lineageTag: a1000001-0000-4000-8000-000000000002
+		lineageTag: 934ff08f-37f4-505b-be8c-b80f448c42a4
 		summarizeBy: none
 		sourceColumn: SellerNo
 
 	column Name
 		dataType: string
-		lineageTag: a1000001-0000-4000-8000-000000000003
+		lineageTag: 30a18a17-1295-560c-a529-16486d80f1f8
 		summarizeBy: none
 		sourceColumn: Name
 
 	column RevenueTarget
 		dataType: decimal
-		formatString: $#,##0.00
-		lineageTag: a1000001-0000-4000-8000-000000000004
+		formatString: $#,##0
+		lineageTag: b1b27a52-7300-549c-9c07-28582f4b6a71
 		summarizeBy: sum
 		sourceColumn: RevenueTarget
 
@@ -26,17 +26,13 @@ table Seller
 			let
 				Sample = Table.FromRows(
 					{
-						{"S01", "Jordan Hale", 80000.00},
-						{"S02", "Priya Shah", 60000.00}
+						{"S01", "Jordan Hale", 80000.0},
+						{"S02", "Priya Shah", 60000.0}
 					},
 					{"SellerNo", "Name", "RevenueTarget"}
 				),
-				Source =
-					if DataSource = "Csv" then
-						Table.PromoteHeaders(
-							Csv.Document(File.Contents(CsvFolder & "Seller.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
-							[PromoteAllScalars = true]
-						)
+				Source = if DataSource = "Csv" then
+						Table.PromoteHeaders(Csv.Document(File.Contents(CsvFolder & "Seller.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
 					else
 						Sample,
 				Typed = Table.TransformColumnTypes(

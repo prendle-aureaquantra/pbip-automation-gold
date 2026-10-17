@@ -1,8 +1,0 @@
-{
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.4.0/schema.json",
-  "name": "e7c1a9b24d6f4803ab15",
-  "displayName": "Pipeline Overview",
-  "displayOption": "FitToPage",
-  "height": 920,
-  "width": 1280
-}

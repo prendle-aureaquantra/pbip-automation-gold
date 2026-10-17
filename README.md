@@ -9,6 +9,9 @@ Public Power BI project generator from Aurea Quantra. It writes a `.pbip` file, 
 - `src/pbip_generator_gold.py` — statistical measures and environment-aware report config
 - `src/pbip_writer.py` — the shared writer the three generators use: a TMDL semantic model and PBIR report pages
 - `src/validate_pbip.py` — static checks for a PBIP folder before you open it in Desktop
+- `examples/build_sales_pipeline.py` — builds the SalesPipeline example with the writer
+- `templates/themes/LuxeOnyx.json` — the report theme the SalesPipeline example uses
+- `tests/` — pytest checks for the writer, the validator and the checked-in examples
 
 ## Run the sample
 
@@ -35,7 +38,7 @@ Python 3.8 or newer is enough. The generators use the standard library. `require
 - `docs/INSTALLATION.md`
 - `docs/USAGE.md`
 
-Open a checked-in project in Power BI Desktop: `examples/InvoiceRegister/InvoiceRegister.pbip` is a sample Business Central-style sales invoice register. `examples/SalesPipeline/SalesPipeline.pbip` is a sample sales pipeline with seller performance, opportunity health, and account health.
+Open a checked-in project in Power BI Desktop: `examples/InvoiceRegister/InvoiceRegister.pbip` is a sample Business Central-style sales invoice register. `examples/SalesPipeline/SalesPipeline.pbip` is a sample sales pipeline with seller performance, opportunity health, and account health. The models are checked in without a data cache, so click **Refresh now** the first time you open one.
 
 `templates/` is still a placeholder. `python3 src/pbip_generator.py` writes a separate project under `output/`.
 

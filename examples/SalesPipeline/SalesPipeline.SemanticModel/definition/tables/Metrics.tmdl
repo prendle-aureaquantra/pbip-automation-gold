@@ -1,51 +1,63 @@
 /// Home for every report measure. The one column is a hidden placeholder so Desktop shows this as a measure table.
 table Metrics
-	lineageTag: a8000001-0000-4000-8000-000000000001
+	lineageTag: af7db3d7-ce8d-52e7-bd9b-aaf01c29801d
 
 	measure 'Won Revenue' = CALCULATE(SUM(Opportunity[Amount]), Opportunity[Stage] = "Won")
 		formatString: $#,##0
 		displayFolder: Revenue
-		lineageTag: a8000001-0000-4000-8000-000000000101
+		lineageTag: e7e21e62-9a11-56a6-a461-4ba5b2a4f3b0
 
 	measure 'Lost Revenue' = CALCULATE(SUM(Opportunity[Amount]), Opportunity[Stage] = "Lost")
 		formatString: $#,##0
 		displayFolder: Revenue
-		lineageTag: a8000001-0000-4000-8000-000000000102
+		lineageTag: 3619c8ae-d717-520b-94ef-c1be97d4d74c
 
 	measure 'Revenue Target' = SUM(Seller[RevenueTarget])
 		formatString: $#,##0
 		displayFolder: Revenue
-		lineageTag: a8000001-0000-4000-8000-000000000103
+		lineageTag: 176656e5-c91b-5749-8dd1-e4284fdf44ad
 
 	measure 'Revenue vs Target' = [Won Revenue] - [Revenue Target]
 		formatString: $#,##0;-$#,##0
 		displayFolder: Revenue
-		lineageTag: a8000001-0000-4000-8000-000000000104
+		lineageTag: dd7b659c-5dee-53a8-978d-978ad0a4d3ac
 
 	measure 'Target Attainment' = DIVIDE([Won Revenue], [Revenue Target])
 		formatString: 0.0%
 		displayFolder: Revenue
-		lineageTag: a8000001-0000-4000-8000-000000000105
+		lineageTag: 49650e97-aa64-5b4a-bf2c-e10b179d8ac8
 
 	measure 'Prior Year Revenue' = SUM(Account[PriorYearRevenue])
 		formatString: $#,##0
 		displayFolder: Revenue
-		lineageTag: a8000001-0000-4000-8000-000000000106
+		lineageTag: 26824edc-90a6-52fc-939f-2049c7f76b20
 
 	measure 'Growth vs Prior Year' = DIVIDE([Won Revenue] - [Prior Year Revenue], [Prior Year Revenue])
 		formatString: 0.0%
 		displayFolder: Revenue
-		lineageTag: a8000001-0000-4000-8000-000000000107
+		lineageTag: 3240d553-660d-5cfd-92f7-81f10db538e8
 
 	measure 'Total Amount' = SUM(Opportunity[Amount])
 		formatString: $#,##0
 		displayFolder: Pipeline
-		lineageTag: a8000001-0000-4000-8000-000000000201
+		lineageTag: 12ea53c2-aba7-5f38-bace-f804f3ac97b3
 
 	measure 'Pipeline Value' = CALCULATE(SUM(Opportunity[Amount]), Opportunity[Is Open] = TRUE())
 		formatString: $#,##0
 		displayFolder: Pipeline
-		lineageTag: a8000001-0000-4000-8000-000000000202
+		lineageTag: 7a94a537-415b-5079-a3b9-16d5ce444a79
+
+	/// Won amount that respects a Stage filter, for visuals split by stage. Won Revenue ignores the Stage filter.
+	measure 'Won Amount' = CALCULATE(SUM(Opportunity[Amount]), KEEPFILTERS(Opportunity[Stage] = "Won"))
+		formatString: $#,##0
+		displayFolder: Pipeline
+		lineageTag: 11f9a7be-a65a-591c-8bac-fc4bfe9cc52e
+
+	/// Lost amount that respects a Stage filter, for visuals split by stage.
+	measure 'Lost Amount' = CALCULATE(SUM(Opportunity[Amount]), KEEPFILTERS(Opportunity[Stage] = "Lost"))
+		formatString: $#,##0
+		displayFolder: Pipeline
+		lineageTag: b940de97-8a8e-57ca-983e-e0fbffb66280
 
 	/// Open amount times the stage probability (Qualify 20%, Propose 50%, Negotiate 75%).
 	measure 'Weighted Pipeline' =
@@ -55,17 +67,17 @@ table Metrics
 			)
 		formatString: $#,##0
 		displayFolder: Pipeline
-		lineageTag: a8000001-0000-4000-8000-000000000203
+		lineageTag: 17403548-8af7-5332-86c8-18e277cb52d6
 
 	measure 'Opportunity Count' = COUNTROWS(Opportunity)
 		formatString: 0
 		displayFolder: Pipeline
-		lineageTag: a8000001-0000-4000-8000-000000000204
+		lineageTag: 75c68018-3377-5397-aa15-528016d14b5a
 
 	measure 'Open Opportunities' = CALCULATE(COUNTROWS(Opportunity), Opportunity[Is Open] = TRUE())
 		formatString: 0
 		displayFolder: Pipeline
-		lineageTag: a8000001-0000-4000-8000-000000000205
+		lineageTag: ad14e4ef-d748-551b-8572-ab62c87da74b
 
 	measure 'Win Rate' =
 			DIVIDE(
@@ -74,12 +86,12 @@ table Metrics
 			)
 		formatString: 0.0%
 		displayFolder: Pipeline
-		lineageTag: a8000001-0000-4000-8000-000000000206
+		lineageTag: eb840f0c-8894-5673-9ef8-21a768b3872e
 
 	measure 'Avg Won Deal Size' = DIVIDE([Won Revenue], CALCULATE(COUNTROWS(Opportunity), Opportunity[Stage] = "Won"))
 		formatString: $#,##0
 		displayFolder: Pipeline
-		lineageTag: a8000001-0000-4000-8000-000000000207
+		lineageTag: 760a2a04-43d3-528f-86c7-77808e015174
 
 	/// Open pipeline divided by the revenue still needed to hit target. Blank once target is met.
 	measure 'Pipeline Coverage' =
@@ -87,32 +99,32 @@ table Metrics
 			RETURN IF(Gap > 0, DIVIDE([Pipeline Value], Gap))
 		formatString: 0.00x
 		displayFolder: Pipeline
-		lineageTag: a8000001-0000-4000-8000-000000000208
+		lineageTag: 4ff61eef-612e-5bb0-b4ed-49a3c6d51698
 
 	measure 'Avg Health Score' = CALCULATE(AVERAGE(Opportunity[Health Score]), Opportunity[Is Open] = TRUE())
 		formatString: 0
 		displayFolder: Health
-		lineageTag: a8000001-0000-4000-8000-000000000301
+		lineageTag: 193ee92c-bd2a-514f-b7de-fac11c7691b8
 
 	measure 'At-Risk Pipeline' = CALCULATE([Pipeline Value], Opportunity[Health Band] = "At Risk")
 		formatString: $#,##0
 		displayFolder: Health
-		lineageTag: a8000001-0000-4000-8000-000000000302
+		lineageTag: c8b1bd12-053d-573a-8768-5ad57b060b04
 
 	measure 'At-Risk Deals' = CALCULATE([Open Opportunities], Opportunity[Health Band] = "At Risk")
 		formatString: 0
 		displayFolder: Health
-		lineageTag: a8000001-0000-4000-8000-000000000303
+		lineageTag: c6490b9c-795b-5ffe-8f53-ab8ce656d250
 
 	measure 'Slipped Deals' = CALCULATE([Open Opportunities], Opportunity[Slippage Days] > 0)
 		formatString: 0
 		displayFolder: Health
-		lineageTag: a8000001-0000-4000-8000-000000000304
+		lineageTag: 4df5dcfb-5d32-55a6-9d06-6419f3510a14
 
 	measure 'Days Since Account Activity' = DATEDIFF(MAX(Account[LastActivityDate]), MAX(Settings[AsOfDate]), DAY)
 		formatString: 0
 		displayFolder: Health
-		lineageTag: a8000001-0000-4000-8000-000000000305
+		lineageTag: 24a7b914-00f9-5ab8-8d83-e37c03c89019
 
 	/// An account is at risk when it has open opportunities and no activity for more than 21 days.
 	measure 'Accounts At Risk' =
@@ -127,26 +139,26 @@ table Metrics
 			    ) + 0
 		formatString: 0
 		displayFolder: Health
-		lineageTag: a8000001-0000-4000-8000-000000000306
+		lineageTag: cc252bd6-a0c9-5703-85a3-6abd17646c8a
 
 	measure 'Account At Risk' = IF(HASONEVALUE(Account[AccountNo]), IF([Accounts At Risk] > 0, "Yes", "No"))
 		displayFolder: Health
-		lineageTag: a8000001-0000-4000-8000-000000000307
+		lineageTag: d5d166ee-50f2-5e33-8df1-f4a4353b64b7
 
 	measure 'Visit Count' = COUNTROWS(Visit) + 0
 		formatString: 0
 		displayFolder: Activity
-		lineageTag: a8000001-0000-4000-8000-000000000401
+		lineageTag: 49ca6c90-97eb-5809-bb86-34a1c072b918
 
 	measure 'Days Since Last Visit' = DATEDIFF(MAX(Visit[VisitDate]), MAX(Settings[AsOfDate]), DAY)
 		formatString: 0
 		displayFolder: Activity
-		lineageTag: a8000001-0000-4000-8000-000000000402
+		lineageTag: 4527470e-d4ab-5781-9d7d-06feaee8d69e
 
 	column Placeholder
 		dataType: string
 		isHidden
-		lineageTag: a8000001-0000-4000-8000-000000000002
+		lineageTag: 2fdd57a7-dd61-5772-8de3-ffbb8f7924ce
 		summarizeBy: none
 		sourceColumn: Placeholder
 
