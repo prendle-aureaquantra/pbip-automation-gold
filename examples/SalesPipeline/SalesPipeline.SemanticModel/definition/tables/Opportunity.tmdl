@@ -1,104 +1,153 @@
 table Opportunity
-	lineageTag: a3000001-0000-4000-8000-000000000001
+	lineageTag: 758b1f62-6898-50ab-843c-7a82a4e2c3e9
 
 	column OpportunityNo
 		dataType: string
-		lineageTag: a3000001-0000-4000-8000-000000000002
+		lineageTag: 5639d3fb-0be2-5ef7-baf3-e74224694a91
 		summarizeBy: none
 		sourceColumn: OpportunityNo
 
 	column AccountNo
 		dataType: string
-		lineageTag: a3000001-0000-4000-8000-000000000003
+		lineageTag: 5e60cc2b-1b86-5324-a8d1-7dfc20cf9999
 		summarizeBy: none
 		sourceColumn: AccountNo
 
 	column SellerNo
 		dataType: string
-		lineageTag: a3000001-0000-4000-8000-000000000004
+		lineageTag: 11ed36ff-4622-5cc0-ae3f-02af5a2851c4
 		summarizeBy: none
 		sourceColumn: SellerNo
 
 	column Stage
 		dataType: string
-		lineageTag: a3000001-0000-4000-8000-000000000005
+		lineageTag: ba2f39fe-af75-541a-8ea3-9ac204472a8b
 		summarizeBy: none
 		sourceColumn: Stage
+		sortByColumn: 'Stage Order'
 
 	column Amount
 		dataType: decimal
-		formatString: $#,##0.00
-		lineageTag: a3000001-0000-4000-8000-000000000006
+		formatString: $#,##0
+		lineageTag: 24842da8-aa9b-56ec-adc6-e8812b68a5d8
 		summarizeBy: sum
 		sourceColumn: Amount
 
 	column CloseDate
 		dataType: dateTime
 		formatString: yyyy-MM-dd
-		lineageTag: a3000001-0000-4000-8000-000000000007
+		lineageTag: 761d679b-9125-50de-bf48-53158a246fa1
 		summarizeBy: none
 		sourceColumn: CloseDate
 
 	column OriginalCloseDate
 		dataType: dateTime
 		formatString: yyyy-MM-dd
-		lineageTag: a3000001-0000-4000-8000-000000000008
+		lineageTag: ad495d6c-1092-5ad1-9491-4aa01a2e31d4
 		summarizeBy: none
 		sourceColumn: OriginalCloseDate
 
 	column StageEnteredDate
 		dataType: dateTime
 		formatString: yyyy-MM-dd
-		lineageTag: a3000001-0000-4000-8000-000000000009
+		lineageTag: 82192bb0-d782-5eab-a7bc-21fc153d2396
 		summarizeBy: none
 		sourceColumn: StageEnteredDate
 
 	column LastActivityDate
 		dataType: dateTime
 		formatString: yyyy-MM-dd
-		lineageTag: a3000001-0000-4000-8000-00000000000a
+		lineageTag: b15d70bf-d274-574b-8cfe-e7a3ecf4d2ce
 		summarizeBy: none
 		sourceColumn: LastActivityDate
 
 	column ContactChanged
 		dataType: string
-		lineageTag: a3000001-0000-4000-8000-00000000000b
+		lineageTag: 16644a91-e0a5-515a-9284-6c04772e1a14
 		summarizeBy: none
 		sourceColumn: ContactChanged
 
-	column 'Stage Age Days' = DATEDIFF(Opportunity[StageEnteredDate], DATE(2026, 10, 15), DAY)
+	/// Computed in Power Query, not DAX: a DAX sort column that reads Stage is a circular dependency.
+	column 'Stage Order'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: fdce4703-9e49-5973-b4c8-6a9b804afc61
+		summarizeBy: none
+		sourceColumn: Stage Order
+
+	column 'Stage Age Days' = DATEDIFF(Opportunity[StageEnteredDate], MAX(Settings[AsOfDate]), DAY)
 		dataType: int64
 		formatString: 0
-		lineageTag: a3000001-0000-4000-8000-00000000000c
+		lineageTag: 8916d007-71eb-5179-b126-fa1f98fabcea
 		summarizeBy: none
 
 	column 'Slippage Days' = DATEDIFF(Opportunity[OriginalCloseDate], Opportunity[CloseDate], DAY)
 		dataType: int64
 		formatString: 0
-		lineageTag: a3000001-0000-4000-8000-00000000000d
+		lineageTag: 71b92499-b7b0-56f7-893c-e909c33f51a0
 		summarizeBy: none
 
-	column 'Health Score' = VAR AsOf = DATE(2026, 10, 15) VAR ActivityDays = DATEDIFF(Opportunity[LastActivityDate], AsOf, DAY) VAR StageDays = DATEDIFF(Opportunity[StageEnteredDate], AsOf, DAY) VAR ActivityPts = SWITCH(TRUE(), ActivityDays <= 7, 40, ActivityDays <= 21, 20, 0) VAR StagePts = SWITCH(TRUE(), StageDays < 14, 30, StageDays <= 30, 15, 0) VAR SlipPts = IF(Opportunity[CloseDate] > Opportunity[OriginalCloseDate], 0, 20) VAR ContactPts = IF(Opportunity[ContactChanged] = "Yes", 0, 10) RETURN ActivityPts + StagePts + SlipPts + ContactPts
+	/// Activity recency (40), stage age (30), no close-date slippage (20) and an unchanged contact (10).
+	column 'Health Score' =
+			VAR AsOf = MAX(Settings[AsOfDate])
+			VAR ActivityDays = DATEDIFF(Opportunity[LastActivityDate], AsOf, DAY)
+			VAR StageDays = DATEDIFF(Opportunity[StageEnteredDate], AsOf, DAY)
+			VAR ActivityPts = SWITCH(TRUE(), ActivityDays <= 7, 40, ActivityDays <= 21, 20, 0)
+			VAR StagePts = SWITCH(TRUE(), StageDays < 14, 30, StageDays <= 30, 15, 0)
+			VAR SlipPts = IF(Opportunity[CloseDate] > Opportunity[OriginalCloseDate], 0, 20)
+			VAR ContactPts = IF(Opportunity[ContactChanged] = "Yes", 0, 10)
+			RETURN ActivityPts + StagePts + SlipPts + ContactPts
 		dataType: int64
 		formatString: 0
-		lineageTag: a3000001-0000-4000-8000-00000000000e
+		lineageTag: 02e8bc83-1e26-5ab6-9578-ef78b18ac715
+		summarizeBy: none
+
+	column 'Is Open' = NOT Opportunity[Stage] IN {"Won", "Lost"}
+		dataType: boolean
+		lineageTag: d48409ad-dff5-51d4-bba6-d925f0ff99a3
+		summarizeBy: none
+
+	column 'Stage Probability' = SWITCH(Opportunity[Stage], "Qualify", 0.2, "Propose", 0.5, "Negotiate", 0.75, "Won", 1, 0)
+		dataType: double
+		formatString: 0%
+		lineageTag: d745d3d0-d27c-5fe5-94c4-d14b62628f3d
+		summarizeBy: none
+
+	/// Healthy is 70 or more, Watch is 40 to 69, At Risk is under 40. Won and lost deals are Closed.
+	column 'Health Band' = IF(NOT Opportunity[Is Open], "Closed", SWITCH(TRUE(), Opportunity[Health Score] >= 70, "Healthy", Opportunity[Health Score] >= 40, "Watch", "At Risk"))
+		dataType: string
+		lineageTag: 2bbf4237-6f43-5601-b652-8f9f4f6e99c4
+		summarizeBy: none
+		sortByColumn: 'Health Band Order'
+
+	/// Built from the same inputs as Health Band, not from Health Band itself: a sort column that reads the column it sorts is a circular dependency.
+	column 'Health Band Order' = IF(NOT Opportunity[Is Open], 4, SWITCH(TRUE(), Opportunity[Health Score] >= 70, 1, Opportunity[Health Score] >= 40, 2, 3))
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6b31a912-50c5-5b39-9655-3d2967631df2
 		summarizeBy: none
 
 	partition Opportunity = m
 		mode: import
 		source =
 			let
-				Source = Table.FromRows(
+				Sample = Table.FromRows(
 					{
-						{"OP-1001", "A01", "S01", "Propose", 24000.00, #date(2026, 10, 28), #date(2026, 10, 20), #date(2026, 9, 20), #date(2026, 10, 12), "No"},
-						{"OP-1002", "A01", "S01", "Won", 36000.00, #date(2026, 9, 15), #date(2026, 9, 15), #date(2026, 8, 1), #date(2026, 9, 14), "No"},
-						{"OP-1003", "A02", "S02", "Negotiate", 15000.00, #date(2026, 11, 15), #date(2026, 10, 1), #date(2026, 8, 1), #date(2026, 9, 2), "Yes"},
-						{"OP-1004", "A02", "S02", "Lost", 9000.00, #date(2026, 8, 30), #date(2026, 8, 30), #date(2026, 7, 15), #date(2026, 8, 20), "No"},
-						{"OP-1005", "A03", "S01", "Qualify", 8000.00, #date(2026, 11, 30), #date(2026, 11, 30), #date(2026, 10, 6), #date(2026, 10, 9), "No"},
-						{"OP-1006", "A03", "S02", "Won", 22000.00, #date(2026, 10, 2), #date(2026, 10, 2), #date(2026, 9, 1), #date(2026, 10, 1), "No"}
+						{"OP-1001", "A01", "S01", "Propose", 24000.0, #date(2026, 10, 28), #date(2026, 10, 20), #date(2026, 9, 20), #date(2026, 10, 12), "No"},
+						{"OP-1002", "A01", "S01", "Won", 36000.0, #date(2026, 9, 15), #date(2026, 9, 15), #date(2026, 8, 1), #date(2026, 9, 14), "No"},
+						{"OP-1003", "A02", "S02", "Negotiate", 15000.0, #date(2026, 11, 15), #date(2026, 10, 1), #date(2026, 8, 1), #date(2026, 9, 2), "Yes"},
+						{"OP-1004", "A02", "S02", "Lost", 9000.0, #date(2026, 8, 30), #date(2026, 8, 30), #date(2026, 7, 15), #date(2026, 8, 20), "No"},
+						{"OP-1005", "A03", "S01", "Qualify", 8000.0, #date(2026, 11, 30), #date(2026, 11, 30), #date(2026, 10, 6), #date(2026, 10, 9), "No"},
+						{"OP-1006", "A03", "S02", "Won", 22000.0, #date(2026, 10, 2), #date(2026, 10, 2), #date(2026, 9, 1), #date(2026, 10, 1), "No"}
 					},
 					{"OpportunityNo", "AccountNo", "SellerNo", "Stage", "Amount", "CloseDate", "OriginalCloseDate", "StageEnteredDate", "LastActivityDate", "ContactChanged"}
 				),
+				Source = if DataSource = "Csv" then
+						Table.PromoteHeaders(Csv.Document(File.Contents(CsvFolder & "Opportunity.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					else
+						Sample,
 				Typed = Table.TransformColumnTypes(
 					Source,
 					{
@@ -112,9 +161,11 @@ table Opportunity
 						{"StageEnteredDate", type date},
 						{"LastActivityDate", type date},
 						{"ContactChanged", type text}
-					}
-				)
+					},
+					"en-US"
+				),
+				#"Add Stage Order" = Table.AddColumn(Typed, "Stage Order", each if [Stage] = "Qualify" then 1 else if [Stage] = "Propose" then 2 else if [Stage] = "Negotiate" then 3 else if [Stage] = "Won" then 4 else if [Stage] = "Lost" then 5 else 9, Int64.Type)
 			in
-				Typed
+				#"Add Stage Order"
 
 	annotation PBI_ResultType = Table

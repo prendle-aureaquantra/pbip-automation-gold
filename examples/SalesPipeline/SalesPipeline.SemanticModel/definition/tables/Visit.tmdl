@@ -1,28 +1,28 @@
 table Visit
-	lineageTag: a4000001-0000-4000-8000-000000000001
+	lineageTag: 9148c751-3abc-5914-9ac0-474f28700787
 
 	column VisitNo
 		dataType: string
-		lineageTag: a4000001-0000-4000-8000-000000000002
+		lineageTag: 06e7d97a-adee-5de2-91dc-1a88f043f0ef
 		summarizeBy: none
 		sourceColumn: VisitNo
 
 	column SellerNo
 		dataType: string
-		lineageTag: a4000001-0000-4000-8000-000000000003
+		lineageTag: fadb2e38-b1d0-5730-a74b-82fb7e3ee003
 		summarizeBy: none
 		sourceColumn: SellerNo
 
 	column VisitDate
 		dataType: dateTime
 		formatString: yyyy-MM-dd
-		lineageTag: a4000001-0000-4000-8000-000000000004
+		lineageTag: f1025f89-ebfc-55c8-b2c5-c9f6e36a072c
 		summarizeBy: none
 		sourceColumn: VisitDate
 
 	column VisitType
 		dataType: string
-		lineageTag: a4000001-0000-4000-8000-000000000005
+		lineageTag: 6c9841e3-cf31-5bbd-9dfd-83cc1f8d9ef9
 		summarizeBy: none
 		sourceColumn: VisitType
 
@@ -30,7 +30,7 @@ table Visit
 		mode: import
 		source =
 			let
-				Source = Table.FromRows(
+				Sample = Table.FromRows(
 					{
 						{"V01", "S01", #date(2026, 10, 1), "Discovery"},
 						{"V02", "S01", #date(2026, 10, 10), "Demo"},
@@ -41,6 +41,10 @@ table Visit
 					},
 					{"VisitNo", "SellerNo", "VisitDate", "VisitType"}
 				),
+				Source = if DataSource = "Csv" then
+						Table.PromoteHeaders(Csv.Document(File.Contents(CsvFolder & "Visit.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					else
+						Sample,
 				Typed = Table.TransformColumnTypes(
 					Source,
 					{
@@ -48,7 +52,8 @@ table Visit
 						{"SellerNo", type text},
 						{"VisitDate", type date},
 						{"VisitType", type text}
-					}
+					},
+					"en-US"
 				)
 			in
 				Typed

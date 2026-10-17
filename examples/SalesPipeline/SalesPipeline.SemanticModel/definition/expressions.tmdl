@@ -1,0 +1,17 @@
+/// Freezes "today" for health scores so the sample does not age. Set it to the refresh date for live data.
+expression AsOfDate = #date(2026, 10, 15) meta [IsParameterQuery=true, Type="Date", IsParameterQueryRequired=true]
+	lineageTag: 42638adc-67ac-50cd-b2f8-96543bcc8123
+
+	annotation PBI_ResultType = Date
+
+/// "Sample" uses the rows stored in each table. "Csv" reads Seller.csv, Account.csv, Opportunity.csv and Visit.csv from CsvFolder.
+expression DataSource = "Sample" meta [IsParameterQuery=true, List={"Sample", "Csv"}, DefaultValue="Sample", Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 701a4e31-5a67-584d-b3f2-b41d21ee4882
+
+	annotation PBI_ResultType = Text
+
+/// Folder holding the CSV files, ending in a slash. Only read when DataSource is "Csv".
+expression CsvFolder = "C:\Users\prendleman\Documents\pbip-automation-gold\examples\SalesPipeline\data\" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=false]
+	lineageTag: 07850c01-58af-52c4-8aaf-f4df7e58300b
+
+	annotation PBI_ResultType = Text

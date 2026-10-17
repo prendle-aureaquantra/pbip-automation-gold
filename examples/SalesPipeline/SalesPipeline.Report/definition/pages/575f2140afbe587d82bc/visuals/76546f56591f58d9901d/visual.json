@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "76546f56591f58d9901d",
+  "position": {
+    "x": 212,
+    "y": 84,
+    "z": 3000,
+    "height": 120,
+    "width": 202,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Metrics"
+                    }
+                  },
+                  "Property": "Avg Health Score"
+                }
+              },
+              "queryRef": "Metrics.Avg Health Score",
+              "nativeQueryRef": "Avg Health Score"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

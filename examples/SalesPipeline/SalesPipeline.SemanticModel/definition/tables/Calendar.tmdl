@@ -1,0 +1,61 @@
+table Calendar
+	dataCategory: Time
+	lineageTag: 1fc4de33-321f-55f0-8311-4aba6aa328eb
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: yyyy-MM-dd
+		lineageTag: 0de27965-300f-52f2-adbf-724c369e961a
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: df94234d-ef6a-5dcb-a36c-8670cfd7ef84
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Year]
+
+	column Month
+		dataType: string
+		lineageTag: aeec3344-87e9-55ec-9c54-9d460dd7be66
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Month]
+		sortByColumn: 'Month Key'
+
+	column 'Month Key'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 8eda5393-9b85-56ff-b2a5-f5b00129ac07
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Month Key]
+
+	column Quarter
+		dataType: string
+		lineageTag: ec1b7a4b-87c6-5be6-acd6-20d26c853b5f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Quarter]
+
+	partition Calendar = calculated
+		mode: import
+		source = ```
+				VAR FirstYear = YEAR(MIN(Opportunity[CloseDate]))
+				VAR LastYear = YEAR(MAX(Opportunity[CloseDate]))
+				RETURN
+				    ADDCOLUMNS(
+				        CALENDAR(DATE(FirstYear, 1, 1), DATE(LastYear, 12, 31)),
+				        "Year", YEAR([Date]),
+				        "Month", FORMAT([Date], "MMM yyyy"),
+				        "Month Key", YEAR([Date]) * 100 + MONTH([Date]),
+				        "Quarter", "Q" & QUARTER([Date]) & " " & YEAR([Date])
+				    )
+				```
+
+	annotation PBI_ResultType = Table

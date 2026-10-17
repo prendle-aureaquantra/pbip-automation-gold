@@ -1,0 +1,17 @@
+table Settings
+	isHidden
+	lineageTag: 523947e0-e4d5-591c-af38-b0aade5d17e1
+
+	column AsOfDate
+		dataType: dateTime
+		isHidden
+		formatString: yyyy-MM-dd
+		lineageTag: 8b5a1662-cc59-567e-b295-dbe98d4f7659
+		summarizeBy: none
+		sourceColumn: AsOfDate
+
+	partition Settings = m
+		mode: import
+		source = #table(type table [AsOfDate = date], {{AsOfDate}})
+
+	annotation PBI_ResultType = Table

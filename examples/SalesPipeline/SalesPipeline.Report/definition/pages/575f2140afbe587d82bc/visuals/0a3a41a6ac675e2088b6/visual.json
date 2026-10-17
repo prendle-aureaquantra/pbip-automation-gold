@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
-  "name": "a9b8c7d6e5f443210987",
+  "name": "0a3a41a6ac675e2088b6",
   "position": {
-    "x": 40,
-    "y": 244,
-    "z": 2000,
-    "height": 340,
-    "width": 1200,
-    "tabOrder": 2000
+    "x": 436,
+    "y": 220,
+    "z": 9000,
+    "height": 380,
+    "width": 820,
+    "tabOrder": 9000
   },
   "visual": {
     "visualType": "tableEx",
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "Opportunity.OpportunityNo",
-              "nativeQueryRef": "Opportunity"
+              "nativeQueryRef": "Opportunity",
+              "displayName": "Opportunity"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "Account.Name",
-              "nativeQueryRef": "Account"
+              "nativeQueryRef": "Account",
+              "displayName": "Account"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "Seller.Name",
-              "nativeQueryRef": "Seller"
+              "nativeQueryRef": "Seller",
+              "displayName": "Seller"
             },
             {
               "field": {
@@ -107,11 +110,26 @@
                       "Entity": "Opportunity"
                     }
                   },
+                  "Property": "Health Band"
+                }
+              },
+              "queryRef": "Opportunity.Health Band",
+              "nativeQueryRef": "Health Band"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Opportunity"
+                    }
+                  },
                   "Property": "Stage Age Days"
                 }
               },
               "queryRef": "Opportunity.Stage Age Days",
-              "nativeQueryRef": "Stage Age"
+              "nativeQueryRef": "Stage Age",
+              "displayName": "Stage Age"
             },
             {
               "field": {
@@ -125,11 +143,109 @@
                 }
               },
               "queryRef": "Opportunity.Slippage Days",
-              "nativeQueryRef": "Slippage"
+              "nativeQueryRef": "Slippage",
+              "displayName": "Slippage"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Opportunity"
+                  }
+                },
+                "Property": "Health Score"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Open Opportunity Health'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "ffd952edbd515e13aa86",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Opportunity"
+              }
+            },
+            "Property": "Is Open"
+          }
+        },
+        "type": "Categorical",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "f",
+              "Entity": "Opportunity",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "In": {
+                  "Expressions": [
+                    {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Source": "f"
+                          }
+                        },
+                        "Property": "Is Open"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    [
+                      {
+                        "Literal": {
+                          "Value": "true"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              }
             }
           ]
         }
       }
-    }
+    ]
   }
 }

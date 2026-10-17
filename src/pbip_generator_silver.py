@@ -13,11 +13,9 @@ Usage:
     from pbip_generator_silver import create_enterprise_report
     create_enterprise_report("Dashboard", tables, relationships, visuals)
 """
-import os
-import json
 import uuid
-import shutil
-from pathlib import Path
+
+from pbip_writer import write_project
 
 def guid():
     return str(uuid.uuid4())
@@ -35,141 +33,6 @@ TIME_INTELLIGENCE = {
     "MovingAvg30": lambda measure, date_col: f"AVERAGEX(DATESINPERIOD({date_col}, MAX({date_col}), -30, DAY), {measure})"
 }
 
-def create_pbip_structure(name, output_dir):
-    """Create PBIP folder structure"""
-    output = Path(output_dir)
-    report_dir = output / f"{name}.Report"
-    model_dir = output / f"{name}.SemanticModel"
-    
-    for d in [report_dir, model_dir]:
-        if d.exists():
-            shutil.rmtree(d)
-        d.mkdir(parents=True, exist_ok=True)
-    
-    with open(output / f"{name}.pbip", 'w') as f:
-        json.dump({
-            "version": "1.0",
-            "artifacts": [{"report": {"path": f"{name}.Report"}}],
-            "settings": {"enableAutoRecovery": True}
-        }, f, indent=2)
-    
-    return report_dir, model_dir
-
-def create_semantic_model_multi(model_dir, name, tables, relationships):
-    """Create semantic model with multiple tables and relationships"""
-    with open(model_dir / "definition.pbism", 'w') as f:
-        json.dump({"version": "4.0", "settings": {}}, f, indent=2)
-    
-    model_tables = []
-    for table in tables:
-        columns = [{"name": c[0], "dataType": c[1], "sourceColumn": c[0], "lineageTag": guid()} 
-                   for c in table["columns"]]
-        measures = [{"name": m[0], "expression": m[1], "formatString": m[2] if len(m) > 2 else "#,##0", "lineageTag": guid()} 
-                    for m in table.get("measures", [])]
-        
-        model_tables.append({
-            "name": table["name"],
-            "lineageTag": guid(),
-            "columns": columns,
-            "measures": measures
-        })
-    
-    model_relationships = []
-    for rel in relationships:
-        model_relationships.append({
-            "name": rel.get("name", guid()),
-            "fromTable": rel["fromTable"],
-            "fromColumn": rel["fromColumn"],
-            "toTable": rel["toTable"],
-            "toColumn": rel["toColumn"],
-            "fromCardinality": rel.get("fromCardinality", "many"),
-            "toCardinality": rel.get("toCardinality", "one"),
-            "crossFilteringBehavior": rel.get("crossFilteringBehavior", "bothDirections")
-        })
-    
-    model = {
-        "name": name,
-        "compatibilityLevel": 1567,
-        "model": {
-            "culture": "en-US",
-            "tables": model_tables,
-            "relationships": model_relationships
-        }
-    }
-    with open(model_dir / "model.bim", 'w') as f:
-        json.dump(model, f, indent=2)
-
-def build_visual_container_silver(v, tables):
-    """Build visual container supporting Silver tier visuals"""
-    table = v.get("table", tables[0]["name"])
-    vtype = v["type"]
-    
-    projections = {}
-    query = None
-    
-    # Card
-    if vtype == "card" and v.get("measure"):
-        projections["Values"] = [{"queryRef": f"{table}.{v['measure']}"}]
-        query = build_query(table, measures=[v["measure"]])
-    
-    # Charts with category
-    elif vtype in ["clusteredBarChart", "lineChart", "pieChart", "areaChart", "donutChart", "treemap", "waterfallChart", "funnel"]:
-        if v.get("category"):
-            proj_key = "Category" if vtype not in ["treemap"] else "Group"
-            projections[proj_key] = [{"queryRef": f"{table}.{v['category']}"}]
-        if v.get("measure"):
-            proj_key = "Values" if vtype in ["treemap"] else "Y"
-            projections[proj_key] = [{"queryRef": f"{table}.{v['measure']}"}]
-        
-        query = build_query(table, 
-                           columns=[v["category"]] if v.get("category") else [],
-                           measures=[v["measure"]] if v.get("measure") else [])
-    
-    # Matrix
-    elif vtype == "matrix":
-        if v.get("categories"):
-            projections["Rows"] = [{"queryRef": f"{table}.{c}"} for c in v["categories"]]
-        if v.get("values"):
-            projections["Values"] = [{"queryRef": f"{table}.{val}"} for val in v["values"]]
-        query = build_query(table, columns=v.get("categories", []), measures=v.get("values", []))
-    
-    # Table
-    elif vtype == "tableEx":
-        if v.get("values"):
-            projections["Values"] = [{"queryRef": f"{table}.{val}"} for val in v["values"]]
-        query = build_query(table, columns=v.get("values", []))
-    
-    # Slicer
-    elif vtype == "slicer" and v.get("category"):
-        projections["Values"] = [{"queryRef": f"{table}.{v['category']}"}]
-        query = build_query(table, columns=[v["category"]])
-    
-    single_visual = {
-        "visualType": vtype,
-        "projections": projections,
-        "vcObjects": {"title": [{"properties": {"text": {"expr": {"Literal": {"Value": f"'{v['title']}'"}}}}}]}
-    }
-    if query:
-        single_visual["prototypeQuery"] = query
-    
-    return {
-        "x": v["x"], "y": v["y"], "width": v["w"], "height": v["h"],
-        "config": json.dumps({"name": guid(), "singleVisual": single_visual}),
-        "filters": "[]"
-    }
-
-def build_query(table, columns=None, measures=None):
-    """Build prototype query"""
-    selects = []
-    for col in (columns or []):
-        selects.append({"Column": {"Expression": {"SourceRef": {"Source": "t"}}, "Property": col}, "Name": f"{table}.{col}"})
-    for msr in (measures or []):
-        selects.append({"Measure": {"Expression": {"SourceRef": {"Source": "t"}}, "Property": msr}, "Name": f"{table}.{msr}"})
-    
-    if not selects:
-        return None
-    return {"Version": 2, "From": [{"Name": "t", "Entity": table, "Type": 0}], "Select": selects}
-
 def create_enterprise_report(name, tables, relationships, visuals, output_dir="output"):
     """
     Create enterprise PBIP report with multi-table model
@@ -181,33 +44,9 @@ def create_enterprise_report(name, tables, relationships, visuals, output_dir="o
         visuals: Dict of page_name -> list of visual configs
         output_dir: Output directory
     """
-    output = Path(output_dir)
-    output.mkdir(parents=True, exist_ok=True)
-    
-    report_dir, model_dir = create_pbip_structure(name, output_dir)
-    create_semantic_model_multi(model_dir, name, tables, relationships)
-    
-    with open(report_dir / "definition.pbir", 'w') as f:
-        json.dump({"version": "4.0", "datasetReference": {"byPath": {"path": f"../{name}.SemanticModel"}}}, f, indent=2)
-    
-    sections = []
-    for idx, (page_name, page_visuals) in enumerate(visuals.items()):
-        containers = [build_visual_container_silver(v, tables) for v in page_visuals]
-        sections.append({
-            "name": f"ReportSection{idx + 1}",
-            "displayName": page_name,
-            "width": 1280, "height": 720,
-            "visualContainers": containers
-        })
-    
-    with open(report_dir / "report.json", 'w') as f:
-        json.dump({
-            "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/1.0.0/schema.json",
-            "sections": sections
-        }, f, indent=2)
-    
-    print(f"Created: {output / f'{name}.pbip'}")
-    return output / f"{name}.pbip"
+    pbip = write_project(name, tables, relationships, visuals, output_dir)
+    print(f"Created: {pbip}")
+    return pbip
 
 def add_time_intelligence(base_measure, date_column, patterns=None):
     """Generate time intelligence measures from a base measure"""
@@ -225,6 +64,11 @@ if __name__ == "__main__":
         {
             "name": "Sales",
             "columns": [("Date", "dateTime"), ("Amount", "double"), ("CustomerID", "string"), ("Region", "string")],
+            "rows": [
+                ["2025-02-10", 900.0, "C1", "West"], ["2025-06-04", 1300.0, "C2", "East"],
+                ["2026-01-15", 1200.0, "C1", "West"], ["2026-02-03", 860.0, "C3", "East"],
+                ["2026-02-20", 1540.0, "C2", "West"], ["2026-03-11", 720.0, "C3", "Central"],
+            ],
             "measures": [
                 ("Total Revenue", "SUM(Sales[Amount])", "$#,##0.00"),
                 ("Revenue YTD", "TOTALYTD(SUM(Sales[Amount]), Sales[Date])", "$#,##0.00"),
@@ -235,6 +79,7 @@ if __name__ == "__main__":
         {
             "name": "Customers",
             "columns": [("CustomerID", "string"), ("CustomerName", "string"), ("Region", "string")],
+            "rows": [["C1", "Sample Northwind", "West"], ["C2", "Sample Lakeside", "East"], ["C3", "Sample Harbor", "Central"]],
             "measures": [("Customer Count", "COUNTROWS(Customers)", "#,##0")]
         }
     ]

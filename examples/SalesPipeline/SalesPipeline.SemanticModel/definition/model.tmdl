@@ -3,9 +3,12 @@ model SalesPipeline
 	defaultPowerBIDataSourceVersion: powerBI_V3
 	discourageImplicitMeasures
 
+ref table Metrics
 ref table Seller
 ref table Account
 ref table Opportunity
 ref table Visit
+ref table Calendar
+ref table Settings
 
 ref cultureInfo en-US
