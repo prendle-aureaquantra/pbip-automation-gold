@@ -59,6 +59,7 @@ CATEGORY_ROLE = {"treemap": "Group"}
 VALUE_ROLE = {"treemap": "Values", "card": "Values", "slicer": "Values", "tableEx": "Values", "pivotTable": "Values"}
 
 SCHEMA = "https://developer.microsoft.com/json-schemas/fabric/"
+THEME_REPORT_VERSION = "5.61"
 
 
 def stable_id(*parts, hex20=False):
@@ -109,49 +110,81 @@ def _norm_columns(table):
     return cols
 
 
+def _csv_source(path_expr):
+    return (f'Table.PromoteHeaders(Csv.Document(File.Contents({path_expr}), '
+            f'[Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])')
+
+
 def _partition_source(table, cols):
-    names = "{" + ", ".join(f'"{n}"' for n, _, p in cols if "expression" not in p) + "}"
-    types = ",\n".join(f'\t\t\t\t\t\t{{"{n}", {M_TYPES.get(t, "type any")}}}' for n, t, p in cols if "expression" not in p)
+    if "m" in table:
+        m = table["m"].strip()
+        return " " + m if "\n" not in m else "\n" + "\n".join("\t\t\t" + line for line in m.splitlines())
+    # Columns with "expression" are DAX; columns with "m" are added in Power Query after typing.
+    data_cols = [(n, t) for n, t, p in cols if "expression" not in p and "m" not in p]
+    names = "{" + ", ".join(f'"{n}"' for n, _ in data_cols) + "}"
+    types = ",\n".join(f'\t\t\t\t\t\t{{"{n}", {M_TYPES.get(t, "type any")}}}' for n, t in data_cols)
+    steps = []
     if "rows" in table:
-        data_cols = [(n, t) for n, t, p in cols if "expression" not in p]
         rows = ",\n".join(
             "\t\t\t\t\t\t{" + ", ".join(_m_literal(v, t) for v, (_, t) in zip(r, data_cols)) + "}"
             for r in table["rows"]
         )
-        source = f"Table.FromRows(\n\t\t\t\t\t{{\n{rows}\n\t\t\t\t\t}},\n\t\t\t\t\t{names}\n\t\t\t\t)"
+        sample = f"Table.FromRows(\n\t\t\t\t\t{{\n{rows}\n\t\t\t\t\t}},\n\t\t\t\t\t{names}\n\t\t\t\t)"
+        if "csv_file" in table:
+            # Switch on the DataSource parameter: "Sample" keeps the rows above, "Csv" reads CsvFolder & csv_file.
+            path = 'CsvFolder & "' + table["csv_file"].replace('"', '""') + '"'
+            steps.append(("Sample", sample))
+            steps.append(("Source", f'if DataSource = "Csv" then\n\t\t\t\t\t\t{_csv_source(path)}\n\t\t\t\t\telse\n\t\t\t\t\t\tSample'))
+        else:
+            steps.append(("Source", sample))
     elif "csv" in table:
-        path = str(table["csv"]).replace('"', '""')
-        source = (f'Table.PromoteHeaders(Csv.Document(File.Contents("{path}"), '
-                  f'[Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])')
+        steps.append(("Source", _csv_source('"' + str(table["csv"]).replace('"', '""') + '"')))
     else:
-        fields = ", ".join(_m_field(n) + " = " + M_TYPES.get(t, "type any").replace("type ", "")
-                           for n, t, p in cols if "expression" not in p)
+        fields = ", ".join(_m_field(n) + " = " + M_TYPES.get(t, "type any").replace("type ", "") for n, t in data_cols)
         return f" #table(type table [{fields}], {{}})"
-    return (
-        "\n\t\t\tlet\n"
-        f"\t\t\t\tSource = {source},\n"
-        f"\t\t\t\tTyped = Table.TransformColumnTypes(\n\t\t\t\t\tSource,\n\t\t\t\t\t{{\n{types}\n\t\t\t\t\t}},\n\t\t\t\t\t\"en-US\"\n\t\t\t\t)\n"
-        "\t\t\tin\n\t\t\t\tTyped"
-    )
+    steps.append(("Typed", f'Table.TransformColumnTypes(\n\t\t\t\t\tSource,\n\t\t\t\t\t{{\n{types}\n\t\t\t\t\t}},\n\t\t\t\t\t"en-US"\n\t\t\t\t)'))
+    for n, t, p in cols:
+        if "m" in p:
+            prev = steps[-1][0]
+            steps.append((_m_field("Add " + n), f'Table.AddColumn({prev}, "{n}", each {p["m"]}, {M_TYPES.get(t, "type any")})'))
+    body = ",\n".join(f"\t\t\t\t{name} = {expr}" for name, expr in steps)
+    return f"\n\t\t\tlet\n{body}\n\t\t\tin\n\t\t\t\t{steps[-1][0]}"
+
+
+def _description(props, indent):
+    text = props.get("description") if isinstance(props, dict) else None
+    return [("\t" * indent) + "/// " + line for line in text.splitlines()] if text else []
 
 
 def table_tmdl(model_name, table):
     tname = table["name"]
     cols = _norm_columns(table)
-    out = [f"table {quote(tname)}", f"\tlineageTag: {stable_id(model_name, tname)}", ""]
+    out = _description(table, 0) + [f"table {quote(tname)}"]
+    if table.get("isHidden"):
+        out.append("\tisHidden")
+    if table.get("dataCategory"):
+        out.append(f"\tdataCategory: {table['dataCategory']}")
+    out += [f"\tlineageTag: {stable_id(model_name, tname)}", ""]
     for m in table.get("measures", []):
         mname, expr = m[0], m[1]
         fmt = m[2] if len(m) > 2 else "#,##0"
+        props = m[3] if len(m) > 3 else {}
+        out += _description(props, 1)
         out.append(f"\tmeasure {quote(mname)}{_expr(expr, 3)}")
         if fmt:
             out.append(f"\t\tformatString: {fmt}")
+        if props.get("displayFolder"):
+            out.append(f"\t\tdisplayFolder: {props['displayFolder']}")
         out.append(f"\t\tlineageTag: {stable_id(model_name, tname, 'measure', mname)}")
         out.append("")
     calculated = "dax" in table
     for name, dtype, props in cols:
         expr = props.get("expression")
+        out += _description(props, 1)
         out.append(f"\tcolumn {quote(name)}{_expr(expr, 3) if expr else ''}")
         out.append(f"\t\tdataType: {'dateTime' if dtype == 'date' else dtype}")
+        if props.get("isKey"):
+            out.append("\t\tisKey")
         if props.get("isHidden"):
             out.append("\t\tisHidden")
         fmt = props.get("formatString") or ("yyyy-MM-dd" if dtype in ("date", "dateTime") else None)
@@ -232,35 +265,172 @@ def _roles(v, vtype):
     return {r: f for r, f in roles.items() if f}
 
 
+def _literal(value):
+    if isinstance(value, bool):
+        return {"Literal": {"Value": "true" if value else "false"}}
+    if isinstance(value, (int, float)):
+        return {"Literal": {"Value": f"{value}L" if isinstance(value, int) else f"{value}D"}}
+    return {"Literal": {"Value": "'" + str(value).replace("'", "''") + "'"}}
+
+
+def _field_ref(kind, ent, prop, source=None):
+    expr = {"SourceRef": {"Source": source}} if source else {"SourceRef": {"Entity": ent}}
+    return {kind: {"Expression": expr, "Property": prop}}
+
+
+def _color(hex_color):
+    return {"solid": {"color": {"expr": _literal(hex_color)}}}
+
+
+def _textbox_json(v, name, z):
+    style = {"fontFamily": v.get("font", "Georgia"), "fontSize": f"{v.get('size', 20)}pt"}
+    if v.get("color"):
+        style["color"] = v["color"]
+    paragraphs = [{"textRuns": [{"value": v["text"], "textStyle": style}]}]
+    if v.get("subtitle"):
+        sub = {"fontFamily": v.get("subtitle_font", "Segoe UI"), "fontSize": f"{v.get('subtitle_size', 10)}pt"}
+        if v.get("subtitle_color"):
+            sub["color"] = v["subtitle_color"]
+        paragraphs.append({"textRuns": [{"value": v["subtitle"], "textStyle": sub}]})
+    return {
+        "$schema": SCHEMA + "item/report/definition/visualContainer/2.0.0/schema.json",
+        "name": name,
+        "position": {"x": v["x"], "y": v["y"], "z": z, "height": v["h"], "width": v["w"], "tabOrder": z},
+        "visual": {
+            "visualType": "textbox",
+            "objects": {"general": [{"properties": {"paragraphs": paragraphs}}]},
+            "visualContainerObjects": {
+                "background": [{"properties": {"show": {"expr": _literal(False)}}}],
+                "border": [{"properties": {"show": {"expr": _literal(False)}}}],
+            },
+        },
+    }
+
+
 def visual_json(v, name, z, resolve, default_table):
+    """Optional keys beyond the fields: "sort": (field, "asc"|"desc"), "filters": [{"field", "values"}],
+    "colors": {measure name or category value: "#RRGGBB"}."""
     vtype = VISUAL_TYPES.get(v["type"], v["type"])
+    if vtype == "textbox":
+        return _textbox_json(v, name, z)
+    table = v.get("table", default_table)
     state = {}
+    measure_refs = {}
+    native_refs = set()  # Desktop rejects a query where two fields share a nativeQueryRef
     for role, fields in _roles(v, vtype).items():
         projections = []
         for f in fields:
             f, label = f if isinstance(f, (tuple, list)) else (f, None)
-            kind, ent, prop = resolve(f, v.get("table", default_table))
+            kind, ent, prop = resolve(f, table)
+            native = label or prop
+            if native in native_refs:
+                native = f"{ent} {prop}"
+            n = 2
+            while native in native_refs:
+                native, n = f"{ent} {prop} {n}", n + 1
+            native_refs.add(native)
             projection = {
-                "field": {kind: {"Expression": {"SourceRef": {"Entity": ent}}, "Property": prop}},
+                "field": _field_ref(kind, ent, prop),
                 "queryRef": f"{ent}.{prop}",
-                "nativeQueryRef": prop,
+                "nativeQueryRef": native,
             }
             if label:
                 projection["displayName"] = label
             projections.append(projection)
+            if kind == "Measure":
+                measure_refs[prop] = f"{ent}.{prop}"
+                if label:
+                    measure_refs[label] = f"{ent}.{prop}"
         state[role] = {"projections": projections}
-    visual = {"visualType": vtype, "query": {"queryState": state}}
+    query = {"queryState": state}
+    if v.get("sort"):
+        field, direction = v["sort"]
+        kind, ent, prop = resolve(field, table)
+        query["sortDefinition"] = {
+            "sort": [{"field": _field_ref(kind, ent, prop),
+                      "direction": "Descending" if direction.lower().startswith("desc") else "Ascending"}],
+            "isDefaultSort": True,
+        }
+    visual = {"visualType": vtype, "query": query}
+
+    colors = []
+    category = next((fields[0] for role, fields in _roles(v, vtype).items()
+                     if role in ("Category", "Group", "Rows")), None)
+    for key, hex_color in (v.get("colors") or {}).items():
+        if key in measure_refs:
+            selector = {"metadata": measure_refs[key]}
+        elif category is not None:
+            cat = category[0] if isinstance(category, (tuple, list)) else category
+            kind, ent, prop = resolve(cat, table)
+            selector = {"data": [{"scopeId": {"Comparison": {
+                "ComparisonKind": 0, "Left": _field_ref(kind, ent, prop), "Right": _literal(key)}}}]}
+        else:
+            raise ValueError(f"color key {key!r} is not a measure or category value of this visual")
+        colors.append({"properties": {"fill": _color(hex_color)}, "selector": selector})
+    if colors:
+        visual["objects"] = {"dataPoint": colors}
+
     if v.get("title") and vtype != "card":
         visual["visualContainerObjects"] = {"title": [{"properties": {
-            "show": {"expr": {"Literal": {"Value": "true"}}},
-            "text": {"expr": {"Literal": {"Value": "'" + v["title"].replace("'", "''") + "'"}}},
+            "show": {"expr": _literal(True)},
+            "text": {"expr": _literal(v["title"])},
         }}]}
-    return {
+    container = {
         "$schema": SCHEMA + "item/report/definition/visualContainer/2.0.0/schema.json",
         "name": name,
         "position": {"x": v["x"], "y": v["y"], "z": z, "height": v["h"], "width": v["w"], "tabOrder": z},
         "visual": visual,
     }
+    filters = []
+    for i, flt in enumerate(v.get("filters") or []):
+        kind, ent, prop = resolve(flt["field"], table)
+        filters.append({
+            "name": stable_id(name, "filter", i, hex20=True),
+            "field": _field_ref(kind, ent, prop),
+            "type": "Categorical",
+            "filter": {
+                "Version": 2,
+                "From": [{"Name": "f", "Entity": ent, "Type": 0}],
+                "Where": [{"Condition": {"In": {
+                    "Expressions": [_field_ref(kind, ent, prop, source="f")],
+                    "Values": [[_literal(val)] for val in flt["values"]],
+                }}}],
+            },
+        })
+    if filters:
+        container["filterConfig"] = {"filters": filters}
+    return container
+
+
+def parameter(name, value, description=None, choices=None, required=True):
+    """A Power Query parameter for `write_project(parameters=[...])`. value: str, bool, number or date."""
+    if isinstance(value, _dt.date):
+        m_type, literal = "Date", f"#date({value.year}, {value.month}, {value.day})"
+    elif isinstance(value, bool):
+        m_type, literal = "Logical", "true" if value else "false"
+    elif isinstance(value, (int, float)):
+        m_type, literal = "Number", repr(value)
+    else:
+        m_type, literal = "Text", '"' + str(value).replace('"', '""') + '"'
+    meta = ["IsParameterQuery=true"]
+    if choices:
+        meta.append("List={" + ", ".join('"' + c.replace('"', '""') + '"' for c in choices) + "}")
+        meta.append(f"DefaultValue={literal}")
+    meta += [f'Type="{m_type}"', f"IsParameterQueryRequired={'true' if required else 'false'}"]
+    return {"name": name, "m": f"{literal} meta [{', '.join(meta)}]", "type": m_type, "description": description}
+
+
+def _expressions_tmdl(model_name, parameters):
+    blocks = []
+    for p in parameters:
+        lines = _description(p, 0) + [
+            f"expression {quote(p['name'])} = {p['m']}",
+            f"\tlineageTag: {stable_id(model_name, 'expression', p['name'])}",
+            "",
+            f"\tannotation PBI_ResultType = {p['type']}",
+        ]
+        blocks.append("\n".join(lines))
+    return "\n\n".join(blocks) + "\n"
 
 
 def _dump(path, obj):
@@ -269,8 +439,13 @@ def _dump(path, obj):
 
 
 def write_project(name, tables, relationships=(), pages=None, output_dir="output",
-                  page_size=(1280, 720), display_name=None):
-    """Write `<output_dir>/<name>.pbip` with a TMDL model and PBIR report. Returns the .pbip path."""
+                  page_size=(1280, 720), display_name=None, parameters=(), theme=None):
+    """Write `<output_dir>/<name>.pbip` with a TMDL model and PBIR report. Returns the .pbip path.
+
+    parameters: Power Query parameters from `parameter(...)`, written to expressions.tmdl.
+    theme: a report theme as a dict, or a path to a theme .json file. It is copied into the
+    report as a registered resource and set as the custom theme.
+    """
     output = Path(output_dir)
     report_dir, model_dir = output / f"{name}.Report", output / f"{name}.SemanticModel"
     for d in (report_dir, model_dir):
@@ -303,6 +478,8 @@ def write_project(name, tables, relationships=(), pages=None, output_dir="output
         + "\nref cultureInfo en-US\n")
     for t in tables:
         (d / "tables" / f"{t['name']}.tmdl").write_text(table_tmdl(name, t), encoding="utf-8")
+    if parameters:
+        (d / "expressions.tmdl").write_text(_expressions_tmdl(name, parameters), encoding="utf-8")
     if relationships:
         rels = []
         for r in relationships:
@@ -326,8 +503,17 @@ def write_project(name, tables, relationships=(), pages=None, output_dir="output
     })
     rd = report_dir / "definition"
     # themeCollection is required by the schema; empty means Desktop's default theme.
-    _dump(rd / "report.json", {"$schema": SCHEMA + "item/report/definition/report/1.3.0/schema.json",
-                               "layoutOptimization": "None", "themeCollection": {}})
+    report = {"$schema": SCHEMA + "item/report/definition/report/1.3.0/schema.json",
+              "layoutOptimization": "None", "themeCollection": {}}
+    if theme is not None:
+        theme_doc = json.loads(Path(theme).read_text(encoding="utf-8")) if not isinstance(theme, dict) else theme
+        file_name = re.sub(r"[^\w.-]+", "", theme_doc.get("name", "Theme").replace(" ", "")) + ".json"
+        _dump(report_dir / "StaticResources" / "RegisteredResources" / file_name, theme_doc)
+        report["themeCollection"] = {"customTheme": {
+            "name": file_name, "reportVersionAtImport": THEME_REPORT_VERSION, "type": "RegisteredResources"}}
+        report["resourcePackages"] = [{"name": "RegisteredResources", "type": "RegisteredResources",
+                                       "items": [{"name": file_name, "path": file_name, "type": "CustomTheme"}]}]
+    _dump(rd / "report.json", report)
     _dump(rd / "version.json", {"$schema": SCHEMA + "item/report/definition/versionMetadata/1.0.0/schema.json",
                                 "version": "2.0.0"})
     _dump(rd / "bookmarks" / "bookmarks.json", {

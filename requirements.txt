@@ -6,3 +6,9 @@
 # For now, placeholder requirements
 # requests>=2.28.0
 # pyyaml>=6.0
+
+# Tests (python -m pytest tests)
+pytest>=8.0
+
+# Optional: python src/validate_pbip.py --schemas
+jsonschema>=4.18

@@ -42,6 +42,7 @@ class Model:
         self.tables = {}
         self.relationships = []  # (name, from, to)
         self.expressions = set()
+        self.expression_values = {}  # name -> M text after "="
         self.refs = []
         self.lineage = []
 
@@ -134,8 +135,9 @@ def parse_tmdl(definition, errors):
                         j += 1
                     table.partitions.append(((ptype or "").strip(), src))
                 elif kind == "expression":
-                    name, _ = _split_decl(rest)
+                    name, value = _split_decl(rest)
                     model.expressions.add(name)
+                    model.expression_values[name] = value or ""
                     obj = ("expression", None)
                 elif kind == "relationship":
                     rel = {"name": _name(rest)}
@@ -170,7 +172,25 @@ def _strip_strings(dax):
     return re.sub(r'"(?:[^"]|"")*"', '""', dax)
 
 
-def check_model(model, errors):
+def _m_string(value):
+    m = re.match(r'^\s*"((?:[^"]|"")*)"', value or "")
+    return m.group(1).replace('""', '"') if m else None
+
+
+def check_csv_folder(model, errors, warnings):
+    """A CsvFolder that does not exist fails the refresh once DataSource is "Csv"."""
+    folder = _m_string(model.expression_values.get("CsvFolder"))
+    if folder is None or Path(folder).is_dir():
+        return
+    message = f"parameter CsvFolder is {folder}, which does not exist on this machine"
+    if _m_string(model.expression_values.get("DataSource")) == "Csv":
+        errors.append(message + " and DataSource is Csv, so refresh will fail")
+    else:
+        warnings.append(message + " (only read when DataSource is Csv)")
+
+
+def check_model(model, errors, warnings=None):
+    warnings = [] if warnings is None else warnings
     all_measures = {m: t.name for t in model.tables.values() for m in t.measures}
 
     for name in model.refs:
@@ -202,6 +222,8 @@ def check_model(model, errors):
                 for param in ("DataSource", "CsvFolder", "AsOfDate"):
                     if re.search(rf"\b{param}\b", _strip_strings(src)) and param not in model.expressions:
                         errors.append(f"{t.name}: partition uses parameter {param}, which is not defined")
+
+    check_csv_folder(model, errors, warnings)
 
     # DAX references in measures, calculated columns and calculated tables
     def check_dax(owner, dax, local_cols=()):
@@ -277,6 +299,25 @@ def check_report(report_dir, model, errors, warnings):
                 if x < ox + ow and ox < x + w and y < oy + oh and oy < y + h:
                     warnings.append(f"{label}: overlaps {oid}")
             boxes.append((x, y, w, h, vid))
+            natives = {}
+            for state in v.get("visual", {}).get("query", {}).get("queryState", {}).values():
+                for p in state.get("projections", []):
+                    natives.setdefault(p.get("nativeQueryRef"), []).append(p.get("queryRef"))
+            for native, refs in natives.items():
+                if native is not None and len(set(refs)) > 1:
+                    errors.append(f"{label}: {', '.join(refs)} share nativeQueryRef {native!r}; "
+                                  "Desktop fails with 'Error fetching data for this visual'")
+            if v.get("visual", {}).get("visualType") in ("tableEx", "pivotTable"):
+                headers = {}
+                for state in v["visual"].get("query", {}).get("queryState", {}).values():
+                    for p in state.get("projections", []):
+                        field = next(iter(p.get("field", {}).values()), {})
+                        header = p.get("displayName") or field.get("Property")
+                        headers.setdefault(header, []).append(p.get("queryRef"))
+                for header, refs in headers.items():
+                    if len(refs) > 1:
+                        warnings.append(f"{label}: {len(refs)} columns share the header {header!r} "
+                                        f"({', '.join(refs)}); give them labels")
             for kind, ent, prop in _fields(v.get("visual", {}).get("query", {})):
                 t = model.tables.get(ent)
                 if t is None:
@@ -287,6 +328,24 @@ def check_report(report_dir, model, errors, warnings):
                     errors.append(f"{label}: uses measure {ent}[{prop}], which does not exist")
                 elif kind == "Column" and t.columns[prop]["props"].get("isHidden") is not None:
                     warnings.append(f"{label}: shows hidden column {ent}[{prop}]")
+
+
+def check_theme(report_dir, errors):
+    """Every registered resource that report.json names must exist."""
+    report_json = report_dir / "definition" / "report.json"
+    if not report_json.exists():
+        return
+    report = json.loads(report_json.read_text(encoding="utf-8"))
+    for package in report.get("resourcePackages", []):
+        for item in package.get("items", []):
+            path = report_dir / "StaticResources" / package.get("name", "") / item.get("path", "")
+            if not path.is_file():
+                errors.append(f"report.json: resource {item.get('name')} has no file at {path.relative_to(report_dir)}")
+    custom = report.get("themeCollection", {}).get("customTheme")
+    if custom:
+        names = {i.get("name") for p in report.get("resourcePackages", []) for i in p.get("items", [])}
+        if custom.get("name") not in names:
+            errors.append(f"report.json: custom theme {custom.get('name')} is not in resourcePackages")
 
 
 def check_schemas(root, errors):
@@ -351,7 +410,8 @@ def validate(pbip_path, schemas=False):
     if schemas:
         check_schemas(root, errors)
     model = parse_tmdl(definition, errors)
-    check_model(model, errors)
+    check_model(model, errors, warnings)
+    check_theme(report_dir, errors)
     if (report_dir / "definition" / "pages" / "pages.json").exists():
         check_report(report_dir, model, errors, warnings)
     else:

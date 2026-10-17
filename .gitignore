@@ -13,6 +13,10 @@ ENV/
 *.pbip/
 *.pbix
 
+# Power BI Desktop's local files inside a PBIP project
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
 # License keys (keep placeholder, not actual keys)
 LICENSE_KEY.txt
 !LICENSE_KEY.txt.example
