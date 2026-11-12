@@ -1,6 +1,6 @@
 # PBIP Automation Suite
 
-Public Power BI project generator from Aurea Quantra. It writes a `.pbip` file, a semantic model, DAX measures, and report pages that open in Power BI Desktop.
+Public Power BI project generator from [Aurea Quantra](https://aureaquantra.com), a Chicago-based Power BI and BI consulting practice. It writes a `.pbip` file, a semantic model, DAX measures, and report pages that open in Power BI Desktop.
 
 ## Modules
 
@@ -44,4 +44,4 @@ Open a checked-in project in Power BI Desktop: `examples/InvoiceRegister/Invoice
 
 ## License
 
-Copyright © 2024 Aurea Quantra. All rights reserved.
+Copyright © 2024 [Aurea Quantra](https://aureaquantra.com). All rights reserved.

@@ -1,5 +1,5 @@
 """
-Aurora Quantra PBIP Automation Suite - Bronze Tier
+Aurea Quantra PBIP Automation Suite - Bronze Tier
 Core PBIP Generator - Basic Reports & Simple Visuals
 
 Features:

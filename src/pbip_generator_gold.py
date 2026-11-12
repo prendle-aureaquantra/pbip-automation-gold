@@ -1,5 +1,5 @@
 """
-Aurora Quantra PBIP Automation Suite - Gold Tier
+Aurea Quantra PBIP Automation Suite - Gold Tier
 Full Data Platform - Advanced Analytics & Data Warehouse Patterns
 
 Includes everything from Silver, plus:
@@ -84,7 +84,7 @@ class VersionControl:
         return {
             "version": "1.0.0",
             "generated": datetime.now().isoformat(),
-            "generator": "Aurora Quantra PBIP Automation Suite - Gold"
+            "generator": "Aurea Quantra PBIP Automation Suite - Gold"
         }
     
     @staticmethod

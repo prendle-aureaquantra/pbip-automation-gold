@@ -1,5 +1,5 @@
 """
-Aurora Quantra PBIP Automation Suite - Silver Tier
+Aurea Quantra PBIP Automation Suite - Silver Tier
 Semantic Model Pro - Multi-Table Models & Time Intelligence
 
 Includes everything from Bronze, plus:
